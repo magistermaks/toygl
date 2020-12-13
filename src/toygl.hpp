@@ -46,13 +46,9 @@
  * 		define TOYGL_IMPLEMENT to implement TGL header
  * 		define TOYGL_ENABLE_3D to add 3D functions
  * 		define TOYGL_ENABLE_DEPTH to enable depth buffer
- * 		define TOYGL_RISCY_PIXEL to skip pixel position check
- * 		define TOYGL_CLAMP_PRIMITIVES to clamp 2D primitives to canvas size
  * 		define TOYGL_LOGO to add draw_logo method
  * 		define TOYGL_ENABLE_TEXTURES to add texture system
  * 		define TOYGL_RGB_CONSTS to add basic RGB color constants
- *
- * 		It is advised to use `TOYGL_RISCY_PIXEL` and `TOYGL_CLAMP_PRIMITIVES` together to avoid Segmentation Faults
  *
  * 3. TODO
  *
@@ -85,7 +81,7 @@ namespace tgl {
 	typedef unsigned char byte;
 	typedef unsigned int uint;
 	typedef byte* color;
-	typedef void (*pixel_placer)( byte, int, int, color );
+	typedef void (*pixel_placer)( uint, uint, color );
 
 	struct vec3f {
 
@@ -181,6 +177,8 @@ namespace tgl {
 			void set_texture_src( tgl::byte* buffer, uint width, uint height );
 			void set_texture_uv( trig2f uv );
 
+			void draw_texture( uint x, uint y );
+
 			mat3x3f triangle_mapping_matrix( trig2f t1, trig2f t2 );
 #endif
 
@@ -194,12 +192,14 @@ namespace tgl {
 #endif
 
 			inline void draw_pixel( uint x, uint y );
+			void draw_unsafe_pixel( uint x, uint y );
 			void draw_line( vec2i v1, vec2i v2 );
 			void draw_triangle( vec2i v1, vec2i v2, vec2i v3 );
 			void draw_square( vec2i v1, vec2i v2 );
 			void draw_circle( vec2i pos, int r );
 			void draw_glyph( uint x, uint y, const byte* glyph, unsigned int scale = 1 );
-			void draw_string( uint x, uint y, const char* text, const byte font[][8], unsigned int scale = 1, int vs = 1, int hs = 0, int fmax = 127, bool special = true );
+			void draw_string( uint x, uint y, const char* text, const byte font[][8], uint scale = 1, int vs = 1, int hs = 0, int fmax = 127, bool special = true );
+			void draw_image( uint x, uint y, tgl::byte* buffer, uint width, uint height );
 
 #ifdef TOYGL_LOGO
 			void draw_logo( vec2i pos, uint size, color fg, color a, color b, color c, const byte font[][8] );
@@ -250,8 +250,8 @@ namespace tgl {
 	namespace math {
 
 		bool invert_matrix( const mat3x3f& m, mat3x3f& im );
-		int max_clamp( int value, int max );
-		float cross( float x1, float y1, float x2, float y2, float x3, float y3 );
+		inline int max_clamp( int value, int max );
+		inline float cross( float x1, float y1, float x2, float y2, float x3, float y3 );
 		int max( int a, int b, int c );
 		int max( int a, int b, int c, int d );
 		int min( int a, int b, int c );
@@ -268,10 +268,6 @@ namespace tgl {
 
 inline void tgl::Renderer::draw_pixel( uint x, uint y ) {
 
-#ifndef TOYGL_RISCY_PIXEL
-	if( x >= width || y >= height ) return;
-#endif
-
 #ifdef TOYGL_ENABLE_DEPTH
 	if( depth_flag ) {
 
@@ -284,7 +280,13 @@ inline void tgl::Renderer::draw_pixel( uint x, uint y ) {
 	}
 #endif
 
-	placer( channels, x, y, col );
+	placer( x, y, col );
+
+}
+
+void tgl::Renderer::draw_unsafe_pixel( uint x, uint y ) {
+
+	if( x < width && y < height ) draw_pixel( x, y );
 
 }
 
@@ -319,6 +321,13 @@ void tgl::Renderer::set_texture_src( tgl::byte* buffer, uint w, uint h ) {
 void tgl::Renderer::set_texture_uv( trig2f uv ) {
 	texture_triangle = uv;
 }
+
+void tgl::Renderer::draw_texture( uint x, uint y ) {
+	if( texture_flag ) {
+		draw_image( x, y, texture, texture_width + 1, texture_height + 1 );
+	}
+}
+
 #endif
 
 #ifdef TOYGL_ENABLE_3D
@@ -361,6 +370,8 @@ void tgl::Renderer::draw_logo( vec2i pos, uint size, color fg, color a, color b,
 	const int s = size * 8;
 	const int h = size * 4;
 
+	if( x > wen || y > hen ) return;
+
 	set_color( a );
 	draw_triangle( vec2i( x + h, y + s ), vec2i( x + s + h, y + s ), vec2i( x + s, y ) );
 
@@ -378,12 +389,10 @@ void tgl::Renderer::draw_logo( vec2i pos, uint size, color fg, color a, color b,
 
 void tgl::Renderer::draw_line( vec2i v1, vec2i v2 ) {
 
-#ifdef TOYGL_CLAMP_PRIMITIVES
 	v1.x = tgl::math::max_clamp( v1.x, wen );
 	v1.y = tgl::math::max_clamp( v1.y, hen );
 	v2.x = tgl::math::max_clamp( v2.x, wen );
 	v2.y = tgl::math::max_clamp( v2.y, hen );
-#endif
 
 	int lx = v2.x - v1.x;
 	int ly = v2.y - v1.y;
@@ -414,12 +423,10 @@ void tgl::Renderer::draw_line( vec2i v1, vec2i v2 ) {
 
 void tgl::Renderer::draw_square( vec2i v1, vec2i v2 ) {
 
-#ifdef TOYGL_CLAMP_PRIMITIVES
 	v1.x = tgl::math::max_clamp( v1.x, wen );
 	v1.y = tgl::math::max_clamp( v1.y, hen );
 	v2.x = tgl::math::max_clamp( v2.x, wen );
 	v2.y = tgl::math::max_clamp( v2.y, hen );
-#endif
 
 	const int xmax = std::max( v1.x, v2.x );
 	const int xmin = std::min( v1.x, v2.x );
@@ -438,18 +445,10 @@ void tgl::Renderer::draw_square( vec2i v1, vec2i v2 ) {
 
 void tgl::Renderer::draw_circle( vec2i pos, int r ) {
 
-#ifdef TOYGL_CLAMP_PRIMITIVES
 	const int xmax = tgl::math::max_clamp( pos.x + r, wen );
 	const int ymax = tgl::math::max_clamp( pos.y + r, hen );
 	const int xmin = tgl::math::max_clamp( pos.x - r, wen );
 	const int ymin = tgl::math::max_clamp( pos.y - r, hen );
-#else
-	const int xmax = pos.x + r;
-	const int xmin = pos.x - r;
-	const int ymax = pos.y + r;
-	const int ymin = pos.y - r;
-#endif
-
 	const int powr = r * r;
 
 	for( int x = xmax; x >= xmin; x -- ) {
@@ -474,10 +473,7 @@ void tgl::Renderer::draw_circle( vec2i pos, int r ) {
 
 void tgl::Renderer::draw_glyph( uint x, uint y, const byte* glyph, unsigned int scale ) {
 
-#ifdef TOYGL_CLAMP_PRIMITIVES
-	x = x > (uint) wen ? wen : x;
-	y = y > (uint) hen ? hen : y;
-#endif
+	if( x > (uint) wen || y > (uint) hen ) return;
 
 	for( int gx = 0; gx < 8; gx ++ ) {
 		const unsigned int bit = 1 << gx;
@@ -486,7 +482,7 @@ void tgl::Renderer::draw_glyph( uint x, uint y, const byte* glyph, unsigned int 
 			if( glyph[gy] & bit ) {
 
 				if( scale == 1 ) {
-					draw_pixel( x + gx, y + gy );
+					draw_unsafe_pixel( x + gx, y + gy );
 				}else{
 					const int sx = x + gx * scale;
 					const int sy = y + gy * scale;
@@ -501,12 +497,9 @@ void tgl::Renderer::draw_glyph( uint x, uint y, const byte* glyph, unsigned int 
 
 void tgl::Renderer::draw_string( uint x, uint y, const char* text, const byte font[][8], unsigned int scale, int vs, int hs, int fmax, bool special ) {
 
-#ifdef TOYGL_CLAMP_PRIMITIVES
-	x = x > (uint) wen ? wen : x;
-	y = y > (uint) hen ? hen : y;
-#endif
+	if( x > (uint) wen || y > (uint) hen ) return;
 
-	const int x0 = x;
+	const uint x0 = x;
 
 	for( int i = 0; true; i ++ ) {
 
@@ -541,17 +534,10 @@ void tgl::Renderer::draw_string( uint x, uint y, const char* text, const byte fo
 
 void tgl::Renderer::draw_triangle( vec2i v1, vec2i v2, vec2i v3 ) {
 
-#ifdef TOYGL_CLAMP_PRIMITIVES
 	const int xmax = tgl::math::max_clamp( tgl::math::max( v1.x, v2.x, v3.x ), wen );
 	const int xmin = tgl::math::max_clamp( tgl::math::min( v1.x, v2.x, v3.x ), wen );
 	const int ymax = tgl::math::max_clamp( tgl::math::max( v1.y, v2.y, v3.y ), hen );
 	const int ymin = tgl::math::max_clamp( tgl::math::min( v1.y, v2.y, v3.y ), hen );
-#else
-	const int xmax = tgl::math::max( v1.x, v2.x, v3.x );
-	const int xmin = tgl::math::min( v1.x, v2.x, v3.x );
-	const int ymax = tgl::math::max( v1.y, v2.y, v3.y );
-	const int ymin = tgl::math::min( v1.y, v2.y, v3.y );
-#endif
 
 #ifdef TOYGL_ENABLE_TEXTURES
 	if( texture_flag ) texture_matrix = triangle_mapping_matrix( trig2f( v1.f(), v2.f(), v3.f() ), texture_triangle );
@@ -579,6 +565,25 @@ void tgl::Renderer::draw_triangle( vec2i v1, vec2i v2, vec2i v3 ) {
 			}else if( painted ) {
 				break;
 			}
+
+		}
+	}
+
+}
+
+void tgl::Renderer::draw_image( uint x, uint y, tgl::byte* buffer, uint w, uint h ) {
+
+	if( x > (uint) wen || y > (uint) hen ) return;
+
+	const int xmax = tgl::math::max_clamp( x + w, wen );
+	const int ymax = tgl::math::max_clamp( y + h, hen );
+
+	for( int yc = y; yc < ymax; yc ++ ) {
+		col = buffer + yc * w * channels;
+		for( int xc = x; xc < xmax; xc ++ ) {
+
+			draw_pixel( xc, yc );
+			col += channels;
 
 		}
 	}
@@ -684,9 +689,9 @@ tgl::mat3x3f tgl::Renderer::triangle_mapping_matrix( trig2f t1, trig2f t2 ) {
 			// check normal
 			if( (a.x * b.y - a.y * b.x) >= 0 ) {
 
-				vec2i p1( std::round(v1.x) + 0, std::round(v1.y) + 0 );
-				vec2i p2( std::round(v2.x) + 0, std::round(v2.y) + 0 );
-				vec2i p3( std::round(v3.x) + 0, std::round(v3.y) + 0 );
+				vec2i p1( std::round(v1.x), std::round(v1.y) );
+				vec2i p2( std::round(v2.x), std::round(v2.y) );
+				vec2i p3( std::round(v3.x), std::round(v3.y) );
 
 				draw_triangle( p1, p2, p3 );
 
@@ -839,34 +844,33 @@ tgl::trig2f::trig2f( vec2f v1, vec2f v2, vec2f v3 ) {
 
 bool tgl::math::invert_matrix( const mat3x3f& m, mat3x3f& im ) {
 
-	float det =
-		  m.m00 * ( m.m11 * m.m22 - m.m12 * m.m21 )
-		- m.m01 * ( m.m10 * m.m22 - m.m12 * m.m20 )
-		+ m.m02 * ( m.m10 * m.m21 - m.m11 * m.m20 );
+	const float A1122 =   ( m.m11 * m.m22 - m.m12 * m.m21 );
+	const float A1022 = - ( m.m10 * m.m22 - m.m12 * m.m20 );
+	const float A2021 =   ( m.m10 * m.m21 - m.m11 * m.m20 );
 
+	float det = m.m00 * A1122 + m.m01 * A1022 + m.m02 * A2021;
 	if( det == 0 ) return false;
+	det = 1.0f / det;
 
-	det = 1 / det;
-
-	im.m00 = det *   ( m.m11 * m.m22 - m.m12 * m.m21 );
+	im.m00 = det *   A1122;
 	im.m01 = det * - ( m.m01 * m.m22 - m.m02 * m.m21 );
 	im.m02 = det *   ( m.m01 * m.m12 - m.m02 * m.m11 );
-	im.m10 = det * - ( m.m10 * m.m22 - m.m12 * m.m20 );
+	im.m10 = det *   A1022;
 	im.m11 = det *   ( m.m00 * m.m22 - m.m02 * m.m20 );
 	im.m12 = det * - ( m.m00 * m.m12 - m.m02 * m.m10 );
-	im.m20 = det *   ( m.m10 * m.m21 - m.m11 * m.m20 );
+	im.m20 = det *   A2021;
 	im.m21 = det * - ( m.m00 * m.m21 - m.m01 * m.m20 );
 	im.m22 = det *   ( m.m00 * m.m11 - m.m01 * m.m10 );
 
 	return true;
 }
 
-int tgl::math::max_clamp( int value, int max ) {
+inline int tgl::math::max_clamp( int value, int max ) {
 	const int v = value < 0 ? 0 : value;
 	return v > max ? max : v;
 }
 
-float tgl::math::cross( float x1, float y1, float x2, float y2, float x3, float y3 ) {
+inline float tgl::math::cross( float x1, float y1, float x2, float y2, float x3, float y3 ) {
 	return (x1 - x3) * (y2 - y3) - (x2 - x3) * (y1 - y3);
 }
 

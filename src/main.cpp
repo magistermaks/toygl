@@ -8,8 +8,6 @@ typedef unsigned long long long_time_t;
 #define TOYGL_IMPLEMENT
 #define TOYGL_ENABLE_DEPTH
 #define TOYGL_ENABLE_3D
-#define TOYGL_RISCY_PIXEL
-#define TOYGL_CLAMP_PRIMITIVES
 #define TOYGL_LOGO
 #define TOYGL_ENABLE_TEXTURES
 #define TOYGL_RGB_CONSTS
@@ -36,7 +34,7 @@ long_time_t get_time() {
 	return tp.tv_sec * 1000ull * 1000ull + tp.tv_usec;
 }
 
-void X11_pixmap_draw( byte channels, int x, int y, tgl::color c ) {
+void X11_pixmap_draw( uint x, uint y, tgl::color c ) {
 	auto& state = win.getState();
 	XSetForeground( state.display, gc, tgl::math::rgb(c[0], c[1], c[2]) );
 	XFillRectangle( state.display, pixmap, gc, x * CANVAS_SCALE, y * CANVAS_SCALE, CANVAS_SCALE, CANVAS_SCALE );
@@ -163,6 +161,10 @@ int main(void) {
     		renderer.draw_3d_cube( tgl::vec3f(0, 0, -3) );
 
     		renderer.draw_3d_cube( tgl::vec3f(px, 0, pz) );
+
+//    		renderer.set_texture(true);
+//    		renderer.draw_texture( 0, 0 );
+//    		renderer.set_texture(false);
 
     		renderer.set_color( tgl::rgb::black );
     		renderer.draw_string(4, 4, text.c_str(), font8x8_basic);
