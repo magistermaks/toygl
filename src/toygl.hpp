@@ -832,7 +832,7 @@ void tgl::renderer::draw_3d_triangle( vec3f v1, vec3f v2, vec3f v3 ) {
 
 }
 
-// deprected
+// Deprecated
 void tgl::renderer::draw_3d_cube( vec3f v ) {
 
 	draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z + 1) );
