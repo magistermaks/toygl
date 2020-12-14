@@ -57,6 +57,8 @@
  * 		define TOYGL_ENABLE_LOGO to add draw_logo method
  * 		define TOYGL_ENABLE_TEXTURES to add texture system
  * 		define TOYGL_ENABLE_RGB to add basic RGB constants and functions
+ * 		define TOYGL_ENABLE_PUBLIC_MODE to make all tgl::renderer fields public
+ * 		define TOYGL_ENABLE_CONTEXT to add 'tgl::renderer*' as a argument for pixel placer
  *
  * 3. Renderer:
  *
@@ -185,10 +187,17 @@
 
 namespace tgl {
 
+	class renderer;
+
 	typedef unsigned char byte;
 	typedef unsigned int uint;
 	typedef byte* color;
+
+#ifdef TOYGL_ENABLE_CONTEXT
+	typedef void (*pixel_placer)( renderer*, uint, uint, color );
+#else
 	typedef void (*pixel_placer)( uint, uint, color );
+#endif
 
 	struct vec3f {
 
@@ -306,7 +315,11 @@ namespace tgl {
 			void draw_3d_triangle( vec3f v1, vec3f v2, vec3f v3 );
 			void draw_3d_cube( vec3f pos );
 
-		protected:
+#ifdef TOYGL_ENABLE_PUBLIC_MODE
+		public:
+#else
+		private:
+#endif
 			float rxc, rxs;
 			float ryc, rys;
 			float rzc, rzs;
@@ -315,17 +328,14 @@ namespace tgl {
 			float far, near, dist, fov, scale;
 #endif
 
-		protected:
 			const uint width, xo;
 			const uint height, yo;
 			const int wen, hen;
 			const byte channels;
-
 			pixel_placer placer;
 			color col;
 
 #ifdef TOYGL_ENABLE_DEPTH
-		protected:
 			float* depth_buffer;
 			float depth;
 			bool depth_flag: 1;
@@ -382,14 +392,16 @@ inline void tgl::renderer::draw_pixel( uint x, uint y ) {
 	}
 #endif
 
+#ifdef TOYGL_ENABLE_CONTEXT
+	placer( this, x, y, col );
+#else
 	placer( x, y, col );
+#endif
 
 }
 
 void tgl::renderer::draw_unsafe_pixel( uint x, uint y ) {
-
 	if( x < width && y < height ) draw_pixel( x, y );
-
 }
 
 void tgl::renderer::set_color( color col ) {
