@@ -8,9 +8,9 @@ typedef unsigned long long long_time_t;
 #define TOYGL_IMPLEMENT
 #define TOYGL_ENABLE_DEPTH
 #define TOYGL_ENABLE_3D
-#define TOYGL_LOGO
+#define TOYGL_ENABLE_LOGO
 #define TOYGL_ENABLE_TEXTURES
-#define TOYGL_RGB_CONSTS
+#define TOYGL_ENABLE_RGB
 #include "toygl.hpp"
 
 using tgl::byte;

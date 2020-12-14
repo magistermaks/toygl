@@ -46,9 +46,9 @@
  * 		define TOYGL_IMPLEMENT to implement TGL header
  * 		define TOYGL_ENABLE_3D to add 3D functions
  * 		define TOYGL_ENABLE_DEPTH to enable depth buffer
- * 		define TOYGL_LOGO to add draw_logo method
+ * 		define TOYGL_ENABLE_LOGO to add draw_logo method
  * 		define TOYGL_ENABLE_TEXTURES to add texture system
- * 		define TOYGL_RGB_CONSTS to add basic RGB color constants
+ * 		define TOYGL_ENABLE_RGB to add basic RGB constants and functions
  *
  * 3. TODO
  *
@@ -71,7 +71,7 @@
 #	define TOYGL_DEPTH( val, ... ) __VA_ARGS__
 #endif
 
-#ifdef TOYGL_LOGO
+#ifdef TOYGL_ENABLE_LOGO
 #	define TOYGL_LOGO_HEIGHT( scale ) (scale * 24)
 #	define TOYGL_LOGO_WIDTH( scale ) (scale * 41.333)
 #endif
@@ -143,7 +143,7 @@ namespace tgl {
 
 	};
 
-#ifdef TOYGL_RGB_CONSTS
+#ifdef TOYGL_ENABLE_RGB
 	namespace rgb {
 
 		const color white = (tgl::byte[]) {255, 255, 255};
@@ -169,10 +169,8 @@ namespace tgl {
 #endif
 
 #ifdef TOYGL_ENABLE_TEXTURES
-		protected:
-			void set_color_from_texture( int x, int y );
-
 		public:
+			void set_color_from_texture( int x, int y );
 			void set_texture( bool enable );
 			void set_texture_src( tgl::byte* buffer, uint width, uint height );
 			void set_texture_uv( trig2f uv );
@@ -201,7 +199,7 @@ namespace tgl {
 			void draw_string( uint x, uint y, const char* text, const byte font[][8], uint scale = 1, int vs = 1, int hs = 0, int fmax = 127, bool special = true );
 			void draw_image( uint x, uint y, tgl::byte* buffer, uint width, uint height );
 
-#ifdef TOYGL_LOGO
+#ifdef TOYGL_ENABLE_LOGO
 			void draw_logo( vec2i pos, uint size, color fg, color a, color b, color c, const byte font[][8] );
 #endif
 
@@ -251,13 +249,20 @@ namespace tgl {
 
 		bool invert_matrix( const mat3x3f& m, mat3x3f& im );
 		inline int max_clamp( int value, int max );
+		inline float half_cross( float a, float b, vec2i& v2 );
 		inline float cross( float x1, float y1, float x2, float y2, float x3, float y3 );
-		int max( int a, int b, int c );
-		int max( int a, int b, int c, int d );
-		int min( int a, int b, int c );
-		int min( int a, int b, int c, int d );
-		unsigned long rgb( byte r, byte g, byte b );
+		inline int max( int a, int b, int c );
+		inline int max( int a, int b, int c, int d );
+		inline int min( int a, int b, int c );
+		inline int min( int a, int b, int c, int d );
 		int signum( int value );
+
+#ifdef TOYGL_ENABLE_RGB
+		uint rgb( byte r, byte g, byte b );
+		byte red( uint color );
+		byte green( uint color );
+		byte blue( uint color );
+#endif
 
 	}
 
@@ -362,7 +367,7 @@ void tgl::Renderer::set_clip( float near, float far ) {
 }
 #endif
 
-#ifdef TOYGL_LOGO
+#ifdef TOYGL_ENABLE_LOGO
 void tgl::Renderer::draw_logo( vec2i pos, uint size, color fg, color a, color b, color c, const byte font[][8] ) {
 
 	const int x = pos.x;
@@ -433,8 +438,8 @@ void tgl::Renderer::draw_square( vec2i v1, vec2i v2 ) {
 	const int ymax = std::max( v1.y, v2.y );
 	const int ymin = std::min( v1.y, v2.y );
 
-	for( int x = xmax; x >= xmin; x -- ) {
-		for( int y = ymax; y >= ymin; y -- ) {
+	for( int x = xmin; x <= xmax; x ++ ) {
+		for( int y = ymin; y <= ymax; y ++ ) {
 
 			draw_pixel( x, y );
 
@@ -456,8 +461,10 @@ void tgl::Renderer::draw_circle( vec2i pos, int r ) {
 
 		for( int y = ymax; y >= ymin; y -- ) {
 
+			const int py = std::pow( y - pos.y, 2 );
+
 			// simplified distance check
-			if( std::pow( x - pos.x, 2 ) + std::pow( y - pos.y, 2 ) <= powr ) {
+			if( std::pow( x - pos.x, 2 ) + py <= powr ) {
 
 				draw_pixel( x, y );
 				painted = true;
@@ -546,21 +553,30 @@ void tgl::Renderer::draw_triangle( vec2i v1, vec2i v2, vec2i v3 ) {
 	for( int x = xmax; x >= xmin; x -- ) {
 		bool painted = false;
 
+		//const float a = tgl::math::half_cross( x, v1.y, v2 ); const bool b1 = a - tgl::math::half_cross( v1.x, y, v2 ) < 0;
+		//const float b = tgl::math::half_cross( x, v2.y, v3 ); const bool b2 = b - tgl::math::half_cross( v2.x, y, v3 ) < 0;
+		//const float c = tgl::math::half_cross( x, v3.y, v1 ); const bool b3 = c - tgl::math::half_cross( v3.x, y, v1 ) < 0;
+
 		for( int y = ymax; y >= ymin; y -- ) {
 
 			// is point (x,y) inside given triangle?
 			const bool b1 = tgl::math::cross( x, y, v1.x, v1.y, v2.x, v2.y ) < 0;
 			const bool b2 = tgl::math::cross( x, y, v2.x, v2.y, v3.x, v3.y ) < 0;
-			const bool b3 = tgl::math::cross( x, y, v3.x, v3.y, v1.x, v1.y ) < 0;
 
-			if( (b1 == b2) && (b2 == b3) ) {
+			if( b1 == b2 ) {
+
+				const bool b3 = tgl::math::cross( x, y, v3.x, v3.y, v1.x, v1.y ) < 0;
+
+				if( b2 == b3 ) {
 
 #ifdef TOYGL_ENABLE_TEXTURES
-				if( texture_flag ) set_color_from_texture( x, y );
+					if( texture_flag ) set_color_from_texture( x, y );
 #endif
 
-				draw_pixel( x, y );
-				painted = true;
+					draw_pixel( x, y );
+					painted = true;
+
+				}
 
 			}else if( painted ) {
 				break;
@@ -647,11 +663,11 @@ tgl::mat3x3f tgl::Renderer::triangle_mapping_matrix( trig2f t1, trig2f t2 ) {
 		vec.y = rxs * c + rxc * b;
 		vec.z = rxc * c - rxs * b;
 
-		const float m = width / ((vec.z + dist) * fov);
+		const float d = vec.z + dist, m = width / (d * fov);
 		vec.x *= m;
 		vec.y *= m;
 
-		vec.z = (vec.z + dist) * (255.0f / far);
+		vec.z = d * (255.0f / far);
 		vec.x += xo;
 		vec.y += yo;
 
@@ -850,6 +866,7 @@ bool tgl::math::invert_matrix( const mat3x3f& m, mat3x3f& im ) {
 
 	float det = m.m00 * A1122 + m.m01 * A1022 + m.m02 * A2021;
 	if( det == 0 ) return false;
+
 	det = 1.0f / det;
 
 	im.m00 = det *   A1122;
@@ -870,23 +887,27 @@ inline int tgl::math::max_clamp( int value, int max ) {
 	return v > max ? max : v;
 }
 
+inline float tgl::math::half_cross( float a, float b, vec2i& v2 ) {
+	return (a - v2.x) * (b - v2.y);
+}
+
 inline float tgl::math::cross( float x1, float y1, float x2, float y2, float x3, float y3 ) {
 	return (x1 - x3) * (y2 - y3) - (x2 - x3) * (y1 - y3);
 }
 
-int tgl::math::max( int a, int b, int c ) {
+inline int tgl::math::max( int a, int b, int c ) {
 	return std::max( std::max( a, b ), c );
 }
 
-int tgl::math::max( int a, int b, int c, int d ) {
+inline int tgl::math::max( int a, int b, int c, int d ) {
 	return std::max( std::max( a, b ), std::max( c, d ) );
 }
 
-int tgl::math::min( int a, int b, int c ) {
+inline int tgl::math::min( int a, int b, int c ) {
 	return std::min( std::min( a, b ), c );
 }
 
-int tgl::math::min( int a, int b, int c, int d ) {
+inline int tgl::math::min( int a, int b, int c, int d ) {
 	return std::min( std::min( a, b ), std::min( c, d ) );
 }
 
@@ -894,8 +915,24 @@ int tgl::math::signum( int value ) {
 	return (0 < value) - (value < 0);
 }
 
-unsigned long tgl::math::rgb( byte r, byte g, byte b ) {
+#ifdef TOYGL_ENABLE_RGB
+uint tgl::math::rgb( byte r, byte g, byte b ) {
 	return b + (g << 8) + (r << 16);
 }
+
+tgl::byte tgl::math::red( uint color ) {
+	return color & 0xFF;
+}
+
+tgl::byte tgl::math::green( uint color ) {
+	return color & 0xFF00;
+}
+
+tgl::byte tgl::math::blue( uint color ) {
+	return color & 0xFF0000;
+}
+#endif
+
+
 
 #endif
