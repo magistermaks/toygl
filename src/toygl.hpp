@@ -664,10 +664,6 @@ void tgl::renderer::draw_triangle( vec2i v1, vec2i v2, vec2i v3 ) {
 	for( int x = xmax; x >= xmin; x -- ) {
 		bool painted = false;
 
-		//const float a = tgl::math::half_cross( x, v1.y, v2 ); const bool b1 = a - tgl::math::half_cross( v1.x, y, v2 ) < 0;
-		//const float b = tgl::math::half_cross( x, v2.y, v3 ); const bool b2 = b - tgl::math::half_cross( v2.x, y, v3 ) < 0;
-		//const float c = tgl::math::half_cross( x, v3.y, v1 ); const bool b3 = c - tgl::math::half_cross( v3.x, y, v1 ) < 0;
-
 		for( int y = ymax; y >= ymin; y -- ) {
 
 			// is point (x,y) inside given triangle?
@@ -764,110 +760,95 @@ tgl::mat3x3f tgl::renderer::triangle_mapping_matrix( trig2f t1, trig2f t2 ) {
 
 #ifdef TOYGL_ENABLE_3D
 
-	void tgl::renderer::project_vector( vec3f& vec ) {
+void tgl::renderer::project_vector( vec3f& vec ) {
 
-		vec.x -= cam.x;
-		vec.y -= cam.y;
-		vec.z -= cam.z;
+	vec.x -= cam.x;
+	vec.y -= cam.y;
+	vec.z -= cam.z;
 
-		vec.x *= scale;
-		vec.y *= scale;
-		vec.z *= scale;
+	vec.x *= scale;
+	vec.y *= scale;
+	vec.z *= scale;
 
-		const float a = rzs * vec.y + rzc * vec.x;
-		const float b = rzc * vec.y - rzs * vec.x;
-		const float c = ryc * vec.z + rys * a;
+	const float a = rzs * vec.y + rzc * vec.x;
+	const float b = rzc * vec.y - rzs * vec.x;
+	const float c = ryc * vec.z + rys * a;
 
-		vec.x = ryc * a - rys * vec.z;
-		vec.y = rxs * c + rxc * b;
-		vec.z = rxc * c - rxs * b;
+	vec.x = ryc * a - rys * vec.z;
+	vec.y = rxs * c + rxc * b;
+	vec.z = rxc * c - rxs * b;
 
-		const float d = vec.z + dist, m = width / (d * fov);
-		vec.x *= m;
-		vec.y *= m;
+	const float d = vec.z + dist, m = width / (d * fov);
+	vec.x *= m;
+	vec.y *= m;
 
-		vec.z = d * (255.0f / far);
-		vec.x += xo;
-		vec.y += yo;
+	vec.z = d * (255.0f / far);
+	vec.x += xo;
+	vec.y += yo;
 
-	}
+}
 
-	void tgl::renderer::draw_3d_line( vec3f v1, vec3f v2 ) {
+void tgl::renderer::draw_3d_line( vec3f v1, vec3f v2 ) {
 
-		project_vector( v1 );
-		project_vector( v2 );
+	project_vector( v1 );
+	project_vector( v2 );
 
-		TOYGL_DEPTH( (v1.z + v2.z) * 0.5f, {
+	TOYGL_DEPTH( (v1.z + v2.z) * 0.5f, {
+
+		vec2i p1( std::round(v1.x), std::round(v1.y) );
+		vec2i p2( std::round(v2.x), std::round(v2.y) );
+
+		draw_line( p1, p2 );
+
+	} );
+
+}
+
+void tgl::renderer::draw_3d_triangle( vec3f v1, vec3f v2, vec3f v3 ) {
+
+	project_vector( v1 );
+	project_vector( v2 );
+	project_vector( v3 );
+
+	TOYGL_DEPTH( (v1.z + v2.z + v3.z) * 0.33f, {
+
+		if (v1.z <= near || v2.z <= near || v3.z <= near || v1.z > far || v2.z > far || v3.z > far) return;
+
+		vec2f a( v2.x - v1.x, v2.y - v1.y );
+		vec2f b( v3.x - v1.x, v3.y - v1.y );
+
+		// check normal
+		if( (a.x * b.y - a.y * b.x) >= 0 ) {
 
 			vec2i p1( std::round(v1.x), std::round(v1.y) );
 			vec2i p2( std::round(v2.x), std::round(v2.y) );
+			vec2i p3( std::round(v3.x), std::round(v3.y) );
 
-			draw_line( p1, p2 );
+			draw_triangle( p1, p2, p3 );
 
-		} );
+		}
 
-	}
+	} );
 
-	void tgl::renderer::draw_3d_triangle( vec3f v1, vec3f v2, vec3f v3 ) {
+}
 
-		project_vector( v1 );
-		project_vector( v2 );
-		project_vector( v3 );
+// deprected
+void tgl::renderer::draw_3d_cube( vec3f v ) {
 
-		TOYGL_DEPTH( (v1.z + v2.z + v3.z) * 0.33f, {
+	draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z + 1) );
+	draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1) );
+	draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1) );
+	draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z - 1) );
+	draw_3d_triangle( vec3f(v.x + 1, v.y - 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1) );
+	draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z + 1) );
+	draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y - 1, v.z + 1) );
+	draw_3d_triangle( vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z - 1) );
+	draw_3d_triangle( vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z + 1) );
+	draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1) );
+	draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z - 1) );
+	draw_3d_triangle( vec3f(v.x + 1, v.y - 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y - 1, v.z + 1) );
 
-			if (v1.z <= near || v2.z <= near || v3.z <= near || v1.z > far || v2.z > far || v3.z > far) return;
-
-			vec2f a( v2.x - v1.x, v2.y - v1.y );
-			vec2f b( v3.x - v1.x, v3.y - v1.y );
-
-			// check normal
-			if( (a.x * b.y - a.y * b.x) >= 0 ) {
-
-				vec2i p1( std::round(v1.x), std::round(v1.y) );
-				vec2i p2( std::round(v2.x), std::round(v2.y) );
-				vec2i p3( std::round(v3.x), std::round(v3.y) );
-
-				draw_triangle( p1, p2, p3 );
-
-			}
-
-		} );
-
-	}
-
-	void tgl::renderer::draw_3d_cube( vec3f v ) {
-
-		set_color( tgl::rgb::red );
-		draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z + 1) );
-		draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1) );
-
-		set_color( tgl::rgb::red );
-		draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1) );
-		draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z - 1) );
-
-		set_color( tgl::rgb::blue );
-		draw_3d_triangle( vec3f(v.x + 1, v.y - 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1) );
-		draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z + 1) );
-
-		set_color( tgl::rgb::blue );
-		draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y - 1, v.z + 1) );
-		draw_3d_triangle( vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z - 1) );
-
-		//set_color( tgl::rgb::green );
-		set_texture( true );
-		set_texture_uv( trig2f( vec2f(0, 0), vec2f(0, 8), vec2f(8, 0) ) );
-		draw_3d_triangle( vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z + 1) );
-
-		set_texture_uv( trig2f( vec2f(8, 8), vec2f(8, 0), vec2f(0, 8) ) );
-		draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1) );
-		set_texture( false );
-
-		set_color( tgl::rgb::green );
-		draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z - 1) );
-		draw_3d_triangle( vec3f(v.x + 1, v.y - 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y - 1, v.z + 1) );
-
-	}
+}
 
 #endif
 

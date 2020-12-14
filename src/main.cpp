@@ -13,6 +13,10 @@ typedef unsigned long long long_time_t;
 #define TOYGL_ENABLE_RGB
 #include "toygl.hpp"
 
+using tgl::vec3f;
+using tgl::vec2f;
+using tgl::color;
+using tgl::trig2f;
 using tgl::byte;
 
 #include "lib/font.h"
@@ -81,6 +85,39 @@ bool framerate( int target, long_time_t& fps, long_time_t& frame, long_time_t& w
 	}
 
 	return false;
+
+}
+
+void draw_3d_cube( tgl::renderer* ctx, tgl::vec3f v ) {
+
+	ctx->set_color( tgl::rgb::red );
+	ctx->draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z + 1) );
+	ctx->draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1) );
+
+	ctx->set_color( tgl::rgb::red );
+	ctx->draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1) );
+	ctx->draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z - 1) );
+
+	ctx->set_color( tgl::rgb::blue );
+	ctx->draw_3d_triangle( vec3f(v.x + 1, v.y - 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1) );
+	ctx->draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z + 1) );
+
+	ctx->set_color( tgl::rgb::blue );
+	ctx->draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y - 1, v.z + 1) );
+	ctx->draw_3d_triangle( vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z - 1) );
+
+	//set_color( tgl::rgb::green );
+	ctx->set_texture( true );
+	ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(0, 8), vec2f(8, 0) ) );
+	ctx->draw_3d_triangle( vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z + 1) );
+
+	ctx->set_texture_uv( trig2f( vec2f(8, 8), vec2f(8, 0), vec2f(0, 8) ) );
+	ctx->draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1) );
+	ctx->set_texture( false );
+
+	ctx->set_color( tgl::rgb::green );
+	ctx->draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z - 1) );
+	ctx->draw_3d_triangle( vec3f(v.x + 1, v.y - 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y - 1, v.z + 1) );
 
 }
 
@@ -154,15 +191,15 @@ int main(void) {
     		rend.set_scale( scale / 2 );
     		rend.set_rotation( tgl::vec3f(radx, rady, 0) );
 
-    		rend.draw_3d_cube( tgl::vec3f(0, 0, 0) );
-    		rend.draw_3d_cube( tgl::vec3f(3, 0, 0) );
-    		rend.draw_3d_cube( tgl::vec3f(-3, 0, 0) );
-    		rend.draw_3d_cube( tgl::vec3f(0, 3, 0) );
-    		rend.draw_3d_cube( tgl::vec3f(0, -3, 0) );
-    		rend.draw_3d_cube( tgl::vec3f(0, 0, 3) );
-    		rend.draw_3d_cube( tgl::vec3f(0, 0, -3) );
+    		draw_3d_cube( &rend,  tgl::vec3f(0, 0, 0) );
+    		draw_3d_cube( &rend, tgl::vec3f(3, 0, 0) );
+    		draw_3d_cube( &rend, tgl::vec3f(-3, 0, 0) );
+    		draw_3d_cube( &rend, tgl::vec3f(0, 3, 0) );
+    		draw_3d_cube( &rend, tgl::vec3f(0, -3, 0) );
+    		draw_3d_cube( &rend, tgl::vec3f(0, 0, 3) );
+    		draw_3d_cube( &rend, tgl::vec3f(0, 0, -3) );
 
-    		rend.draw_3d_cube( tgl::vec3f(px, 0, pz) );
+    		draw_3d_cube( &rend, tgl::vec3f(px, 0, pz) );
 
 //    		renderer.set_texture(true);
 //    		renderer.draw_texture( 0, 0 );
