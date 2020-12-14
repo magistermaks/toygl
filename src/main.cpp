@@ -86,6 +86,8 @@ bool framerate( int target, long_time_t& fps, long_time_t& frame, long_time_t& w
 
 int main(void) {
 
+	std::cout << "Version: " << TOYGL_VERSION << std::endl;
+
 #define R 255, 0, 0
 #define G 0, 255, 0
 #define B 0, 0, 255

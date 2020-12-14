@@ -185,6 +185,8 @@
 #	define TOYGL_LOGO_WIDTH( scale ) (scale * 41.333)
 #endif
 
+#define TOYGL_VERSION "ToyGL 1.0.0"
+
 namespace tgl {
 
 	class renderer;
@@ -1043,7 +1045,5 @@ tgl::byte tgl::math::blue( uint color ) {
 	return color & 0xFF0000;
 }
 #endif
-
-
 
 #endif
