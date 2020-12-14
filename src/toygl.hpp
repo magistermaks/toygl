@@ -34,24 +34,131 @@
  *
  *		TGL is better than CHAD ENGINE.
  *
- * 1. Sources:
+ * 1. Features:
  *
- * 		en.wikipedia.org/wiki/3D_projection
- * 		learnopengl.com/Advanced-OpenGL/Depth-testing
- * 		learnopengl.com/Getting-started/Transformations
- * 		github.com/willnode/N-Matrix-Programmer
+ *		TGL is capable of drawing 2D and 3D primitives, simple string
+ *		and sprite rendering (using 8x8 binary fonts). provides methods
+ *		to manipulate the position, scale, field of view, and rotation
+ *		of the 3D camera. It is also capable of applying colors and textures
+ *		to rendered triangles.
  *
  * 2. Preprocessor:
  *
- * 		define TOYGL_IMPLEMENT to implement TGL header
+ * 		Use: TOYGL_IMPLEMENT to implement TGL header
+ *
+ * 			#define TOYGL_IMPLEMENT
+ * 			#include "toygl.hpp"
+ *
+ * 		Some TGL features are DISABLED by default and need to be
+ * 		enabled using preprocessor statements listed below:
+ *
  * 		define TOYGL_ENABLE_3D to add 3D functions
  * 		define TOYGL_ENABLE_DEPTH to enable depth buffer
  * 		define TOYGL_ENABLE_LOGO to add draw_logo method
  * 		define TOYGL_ENABLE_TEXTURES to add texture system
  * 		define TOYGL_ENABLE_RGB to add basic RGB constants and functions
  *
- * 3. TODO
+ * 3. Renderer:
  *
+ * 		Before TGL can do any rendering new tgl::renderer object must
+ * 		be created as follows:
+ *
+ * 			tgl::renderer rend( width, height, pixel_placer, channels = 3 );
+ *
+ * 		where width and height are the size of the canvas and pixel_placer
+ * 		is a special function that will be invoked by TGL to draw pixels.
+ * 		(TGL don't have any internal screen buffer - it must be managed using
+ * 		by the user). Extra value `channels` may be provided to change the default
+ * 		(3, RGB) channel count.
+ *
+ * 		pixel_placer will receive 3 arguments:
+ *
+ * 			unsigned int x, x position of the pixel to be placed
+ * 			unsigned int y, y position of the pixel to be placed
+ * 			tgl::color c, a pointer to the channel-count-sized value array
+ *
+ * 		Example:
+ *
+ * 			tgl::renderer rend( width, height, [] ( uint x, uint y, tgl::color c ) -> void {
+ * 				some_screen_buffer[x][y][0] = c[0]; // red
+ * 				some_screen_buffer[x][y][1] = c[1]; // green
+ * 				some_screen_buffer[x][y][2] = c[2]; // blue
+ * 			}, 3 );
+ *
+ * 4. TGL renderer methods:
+ *
+ *		All 3D draw/cfg calls and `draw_logo` are DISABLED
+ *		by default, see section 'Preprocessor' to learn
+ *		how to enable them.
+ *
+ * 		Draw calls:
+ * 			draw_pixel
+ * 			draw_unsafe_pixel
+ * 			draw_line
+ * 			draw_triangle
+ * 			draw_square
+ * 			draw_circle
+ * 			draw_glyph
+ * 			draw_string
+ * 			draw_logo
+ * 			draw_image
+ * 			draw_texture
+ * 			draw_3d_line
+ * 			draw_3d_triangle
+ * 			draw_3d_cube
+ *
+ * 		Configuration calls:
+ * 			set_color
+ * 			set_depth
+ * 			set_color_from_texture
+ * 			set_texture
+ * 			set_texture_src
+ * 			set_texture_uv
+ * 			set_rotation
+ * 			set_camera
+ * 			set_distance
+ * 			set_scale
+ * 			set_fov
+ * 			set_clip
+ *
+ * 5. Math overview:
+ *
+ *		Other than tgl::renderer TGL provides several
+ *		vector types, one matrix type and  couple of
+ *		math methods to manipulate them.
+ *
+ *			tgl::vec3f - vector of 3 floats
+ *				with fields .x, .y, .z
+ *
+ *			tgl::vec2f - vector of 2 floats
+ *				with fields .x, .y
+ *
+ *			tgl::vec2i - vector of 2 ints
+ *				with fields .x, .y
+ *
+ *			tgl::mat3x3f - 3x3 float matrix
+ *				with fields .mYX, where Y is 0-2 row number and
+ *				X is 0-2 column number.
+ *
+ *		mat3x3f can be multiplied with other mat3x3f or vec3f.
+ *
+ *		tgl::math namespace defines more function but
+ *		only the following are guaranteed to work as expected
+ *		and not to be deleted with next version of the library:
+ *
+ *			bool invert_matrix( mat3x3f& in, mat3x3f& out ) inverts matrix `in` and saves the result in `out`
+ *			int max_clamp( int value, int max ) clamps given value to range [0-max]
+ *			int signum( int value ) returns -1, 0, or 1 depending on given value's sign
+ *
+ */
+
+/*
+ * Some of the sources used while writing TGL:
+ *
+ * 		en.wikipedia.org/wiki/3D_projection
+ * 		learnopengl.com/Advanced-OpenGL/Depth-testing
+ * 		learnopengl.com/Getting-started/Transformations
+ * 		github.com/willnode/N-Matrix-Programmer
  */
 
 #pragma once
@@ -90,16 +197,6 @@ namespace tgl {
 		float z;
 
 		vec3f( float x, float y, float z );
-
-	};
-
-	struct vec3i {
-
-		int x;
-		int y;
-		int z;
-
-		vec3i( int x, int y, int z );
 
 	};
 
@@ -802,12 +899,6 @@ tgl::renderer::~renderer() {
 }
 
 tgl::vec3f::vec3f( float x, float y, float z ) {
-	this->x = x;
-	this->y = y;
-	this->z = z;
-}
-
-tgl::vec3i::vec3i( int x, int y, int z ) {
 	this->x = x;
 	this->y = y;
 	this->z = z;
