@@ -155,11 +155,11 @@ namespace tgl {
 	}
 #endif
 
-	class Renderer {
+	class renderer {
 
 		public:
-			Renderer( uint x, uint y, pixel_placer placer, byte channels = 3 );
-			~Renderer();
+			renderer( uint x, uint y, pixel_placer placer, byte channels = 3 );
+			~renderer();
 
 			void set_color( color col );
 
@@ -175,7 +175,7 @@ namespace tgl {
 			void set_texture_src( tgl::byte* buffer, uint width, uint height );
 			void set_texture_uv( trig2f uv );
 
-			void draw_texture( uint x, uint y );
+			void draw_texture( uint x, uint y, uint scale = 1 );
 
 			mat3x3f triangle_mapping_matrix( trig2f t1, trig2f t2 );
 #endif
@@ -197,7 +197,7 @@ namespace tgl {
 			void draw_circle( vec2i pos, int r );
 			void draw_glyph( uint x, uint y, const byte* glyph, unsigned int scale = 1 );
 			void draw_string( uint x, uint y, const char* text, const byte font[][8], uint scale = 1, int vs = 1, int hs = 0, int fmax = 127, bool special = true );
-			void draw_image( uint x, uint y, tgl::byte* buffer, uint width, uint height );
+			void draw_image( uint x, uint y, tgl::byte* buffer, uint width, uint height, uint scale = 1 );
 
 #ifdef TOYGL_ENABLE_LOGO
 			void draw_logo( vec2i pos, uint size, color fg, color a, color b, color c, const byte font[][8] );
@@ -271,7 +271,7 @@ namespace tgl {
 // BEGIN LIBRARY IMPLEMENTATION
 #ifdef TOYGL_IMPLEMENT
 
-inline void tgl::Renderer::draw_pixel( uint x, uint y ) {
+inline void tgl::renderer::draw_pixel( uint x, uint y ) {
 
 #ifdef TOYGL_ENABLE_DEPTH
 	if( depth_flag ) {
@@ -289,22 +289,22 @@ inline void tgl::Renderer::draw_pixel( uint x, uint y ) {
 
 }
 
-void tgl::Renderer::draw_unsafe_pixel( uint x, uint y ) {
+void tgl::renderer::draw_unsafe_pixel( uint x, uint y ) {
 
 	if( x < width && y < height ) draw_pixel( x, y );
 
 }
 
-void tgl::Renderer::set_color( color col ) {
+void tgl::renderer::set_color( color col ) {
 	this->col = col;
 }
 
 #ifdef TOYGL_ENABLE_DEPTH
-void tgl::Renderer::set_depth( bool enable ) {
+void tgl::renderer::set_depth( bool enable ) {
 	this->depth_enable = enable;
 }
 
-void tgl::Renderer::clear_depth() {
+void tgl::renderer::clear_depth() {
 	for( unsigned int i = 0; i < width * height; i ++ ) {
 		depth_buffer[i] = FLT_MAX;
 	}
@@ -313,30 +313,30 @@ void tgl::Renderer::clear_depth() {
 
 #ifdef TOYGL_ENABLE_TEXTURES
 
-void tgl::Renderer::set_texture( bool enable ) {
+void tgl::renderer::set_texture( bool enable ) {
 	texture_flag = ( texture == nullptr ) ? false : enable;
 }
 
-void tgl::Renderer::set_texture_src( tgl::byte* buffer, uint w, uint h ) {
+void tgl::renderer::set_texture_src( tgl::byte* buffer, uint w, uint h ) {
 	texture = buffer;
 	texture_width = w - 1;
 	texture_height = h - 1;
 }
 
-void tgl::Renderer::set_texture_uv( trig2f uv ) {
+void tgl::renderer::set_texture_uv( trig2f uv ) {
 	texture_triangle = uv;
 }
 
-void tgl::Renderer::draw_texture( uint x, uint y ) {
+void tgl::renderer::draw_texture( uint x, uint y, uint scale ) {
 	if( texture_flag ) {
-		draw_image( x, y, texture, texture_width + 1, texture_height + 1 );
+		draw_image( x, y, texture, texture_width + 1, texture_height + 1, scale );
 	}
 }
 
 #endif
 
 #ifdef TOYGL_ENABLE_3D
-void tgl::Renderer::set_rotation( vec3f rot ) {
+void tgl::renderer::set_rotation( vec3f rot ) {
 	this->rxc = cos(rot.x);
 	this->rxs = sin(rot.x);
 	this->ryc = cos(rot.y);
@@ -345,30 +345,30 @@ void tgl::Renderer::set_rotation( vec3f rot ) {
 	this->rzs = sin(rot.z);
 }
 
-void tgl::Renderer::set_camera( vec3f pos ) {
+void tgl::renderer::set_camera( vec3f pos ) {
 	this->cam = pos;
 }
 
-void tgl::Renderer::set_distance( float dist ) {
+void tgl::renderer::set_distance( float dist ) {
 	this->dist = dist;
 }
 
-void tgl::Renderer::set_scale( float scale ) {
+void tgl::renderer::set_scale( float scale ) {
 	this->scale = scale;
 }
 
-void tgl::Renderer::set_fov( float fov ) {
+void tgl::renderer::set_fov( float fov ) {
 	this->fov = tan( fov / 2.0f );
 }
 
-void tgl::Renderer::set_clip( float near, float far ) {
+void tgl::renderer::set_clip( float near, float far ) {
 	this->near = near;
 	this->far = far;
 }
 #endif
 
 #ifdef TOYGL_ENABLE_LOGO
-void tgl::Renderer::draw_logo( vec2i pos, uint size, color fg, color a, color b, color c, const byte font[][8] ) {
+void tgl::renderer::draw_logo( vec2i pos, uint size, color fg, color a, color b, color c, const byte font[][8] ) {
 
 	const int x = pos.x;
 	const int y = pos.y;
@@ -381,7 +381,7 @@ void tgl::Renderer::draw_logo( vec2i pos, uint size, color fg, color a, color b,
 	draw_triangle( vec2i( x + h, y + s ), vec2i( x + s + h, y + s ), vec2i( x + s, y ) );
 
 	set_color( b );
-	draw_square( vec2i( x + s * 2, y ), vec2i( x + s * 3, y + s ) );
+	draw_square( vec2i( x + s * 2, y ), vec2i( x + s * 3 - 1, y + s - 1 ) );
 
 	set_color( c );
 	draw_circle( vec2i( x + s * 4, y + h ), h );
@@ -392,7 +392,7 @@ void tgl::Renderer::draw_logo( vec2i pos, uint size, color fg, color a, color b,
 }
 #endif
 
-void tgl::Renderer::draw_line( vec2i v1, vec2i v2 ) {
+void tgl::renderer::draw_line( vec2i v1, vec2i v2 ) {
 
 	v1.x = tgl::math::max_clamp( v1.x, wen );
 	v1.y = tgl::math::max_clamp( v1.y, hen );
@@ -426,7 +426,7 @@ void tgl::Renderer::draw_line( vec2i v1, vec2i v2 ) {
 }
 
 
-void tgl::Renderer::draw_square( vec2i v1, vec2i v2 ) {
+void tgl::renderer::draw_square( vec2i v1, vec2i v2 ) {
 
 	v1.x = tgl::math::max_clamp( v1.x, wen );
 	v1.y = tgl::math::max_clamp( v1.y, hen );
@@ -448,7 +448,7 @@ void tgl::Renderer::draw_square( vec2i v1, vec2i v2 ) {
 
 }
 
-void tgl::Renderer::draw_circle( vec2i pos, int r ) {
+void tgl::renderer::draw_circle( vec2i pos, int r ) {
 
 	const int xmax = tgl::math::max_clamp( pos.x + r, wen );
 	const int ymax = tgl::math::max_clamp( pos.y + r, hen );
@@ -478,7 +478,7 @@ void tgl::Renderer::draw_circle( vec2i pos, int r ) {
 
 }
 
-void tgl::Renderer::draw_glyph( uint x, uint y, const byte* glyph, unsigned int scale ) {
+void tgl::renderer::draw_glyph( uint x, uint y, const byte* glyph, unsigned int scale ) {
 
 	if( x > (uint) wen || y > (uint) hen ) return;
 
@@ -502,7 +502,7 @@ void tgl::Renderer::draw_glyph( uint x, uint y, const byte* glyph, unsigned int 
 
 }
 
-void tgl::Renderer::draw_string( uint x, uint y, const char* text, const byte font[][8], unsigned int scale, int vs, int hs, int fmax, bool special ) {
+void tgl::renderer::draw_string( uint x, uint y, const char* text, const byte font[][8], unsigned int scale, int vs, int hs, int fmax, bool special ) {
 
 	if( x > (uint) wen || y > (uint) hen ) return;
 
@@ -539,7 +539,7 @@ void tgl::Renderer::draw_string( uint x, uint y, const char* text, const byte fo
 
 }
 
-void tgl::Renderer::draw_triangle( vec2i v1, vec2i v2, vec2i v3 ) {
+void tgl::renderer::draw_triangle( vec2i v1, vec2i v2, vec2i v3 ) {
 
 	const int xmax = tgl::math::max_clamp( tgl::math::max( v1.x, v2.x, v3.x ), wen );
 	const int xmin = tgl::math::max_clamp( tgl::math::min( v1.x, v2.x, v3.x ), wen );
@@ -587,7 +587,7 @@ void tgl::Renderer::draw_triangle( vec2i v1, vec2i v2, vec2i v3 ) {
 
 }
 
-void tgl::Renderer::draw_image( uint x, uint y, tgl::byte* buffer, uint w, uint h ) {
+void tgl::renderer::draw_image( uint x, uint y, tgl::byte* buffer, uint w, uint h, uint scale ) {
 
 	if( x > (uint) wen || y > (uint) hen ) return;
 
@@ -596,9 +596,17 @@ void tgl::Renderer::draw_image( uint x, uint y, tgl::byte* buffer, uint w, uint 
 
 	for( int yc = y; yc < ymax; yc ++ ) {
 		col = buffer + yc * w * channels;
+
 		for( int xc = x; xc < xmax; xc ++ ) {
 
-			draw_pixel( xc, yc );
+			if( scale == 1 ) {
+				draw_pixel( xc, yc );
+			}else{
+				const int sx = xc * scale;
+				const int sy = yc * scale;
+				draw_square( vec2i(sx, sy), vec2i(sx + scale - 1, sy + scale - 1) );
+			}
+
 			col += channels;
 
 		}
@@ -608,7 +616,7 @@ void tgl::Renderer::draw_image( uint x, uint y, tgl::byte* buffer, uint w, uint 
 
 #ifdef TOYGL_ENABLE_TEXTURES
 
-void tgl::Renderer::set_color_from_texture( int x, int y ) {
+void tgl::renderer::set_color_from_texture( int x, int y ) {
 	vec3f uv = texture_matrix * vec3f( x, y, 1 );
 
 	const uint uvx = tgl::math::max_clamp( std::floor(uv.x), texture_width );
@@ -617,7 +625,7 @@ void tgl::Renderer::set_color_from_texture( int x, int y ) {
 	col = texture + (uvy * (texture_width + 1) + uvx) * channels;
 }
 
-tgl::mat3x3f tgl::Renderer::triangle_mapping_matrix( trig2f t1, trig2f t2 ) {
+tgl::mat3x3f tgl::renderer::triangle_mapping_matrix( trig2f t1, trig2f t2 ) {
 
 	mat3x3f invm = {0};
 
@@ -645,7 +653,7 @@ tgl::mat3x3f tgl::Renderer::triangle_mapping_matrix( trig2f t1, trig2f t2 ) {
 
 #ifdef TOYGL_ENABLE_3D
 
-	void tgl::Renderer::project_vector( vec3f& vec ) {
+	void tgl::renderer::project_vector( vec3f& vec ) {
 
 		vec.x -= cam.x;
 		vec.y -= cam.y;
@@ -673,7 +681,7 @@ tgl::mat3x3f tgl::Renderer::triangle_mapping_matrix( trig2f t1, trig2f t2 ) {
 
 	}
 
-	void tgl::Renderer::draw_3d_line( vec3f v1, vec3f v2 ) {
+	void tgl::renderer::draw_3d_line( vec3f v1, vec3f v2 ) {
 
 		project_vector( v1 );
 		project_vector( v2 );
@@ -689,7 +697,7 @@ tgl::mat3x3f tgl::Renderer::triangle_mapping_matrix( trig2f t1, trig2f t2 ) {
 
 	}
 
-	void tgl::Renderer::draw_3d_triangle( vec3f v1, vec3f v2, vec3f v3 ) {
+	void tgl::renderer::draw_3d_triangle( vec3f v1, vec3f v2, vec3f v3 ) {
 
 		project_vector( v1 );
 		project_vector( v2 );
@@ -717,7 +725,7 @@ tgl::mat3x3f tgl::Renderer::triangle_mapping_matrix( trig2f t1, trig2f t2 ) {
 
 	}
 
-	void tgl::Renderer::draw_3d_cube( vec3f v ) {
+	void tgl::renderer::draw_3d_cube( vec3f v ) {
 
 		set_color( tgl::rgb::red );
 		draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z + 1) );
@@ -752,7 +760,7 @@ tgl::mat3x3f tgl::Renderer::triangle_mapping_matrix( trig2f t1, trig2f t2 ) {
 
 #endif
 
-tgl::Renderer::Renderer( uint x, uint y, pixel_placer placer, byte _channels ):
+tgl::renderer::renderer( uint x, uint y, pixel_placer placer, byte _channels ):
 		width( x ),
 		xo( x >> 1 ),
 		height( y ),
@@ -787,7 +795,7 @@ tgl::Renderer::Renderer( uint x, uint y, pixel_placer placer, byte _channels ):
 
 }
 
-tgl::Renderer::~Renderer() {
+tgl::renderer::~renderer() {
 #ifdef TOYGL_ENABLE_DEPTH
 	free( this->depth_buffer );
 #endif

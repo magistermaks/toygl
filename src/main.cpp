@@ -104,9 +104,9 @@ int main(void) {
 
 	size_t frame_count = 0;
 
-	tgl::Renderer renderer( CANVAS_SIZE, CANVAS_SIZE, X11_pixmap_draw );
-	renderer.set_distance( 15 );
-	renderer.set_texture_src( texture, 8, 8 );
+	tgl::renderer rend( CANVAS_SIZE, CANVAS_SIZE, X11_pixmap_draw );
+	rend.set_distance( 15 );
+	rend.set_texture_src( texture, 8, 8 );
 
 	win.setTitle( "Hello ToyGL/WINX!" );
 
@@ -125,14 +125,14 @@ int main(void) {
     while( win.tick() ) {
 
     	X11_pixmap_clear( 255, 255, 255 );
-    	renderer.clear_depth();
+    	rend.clear_depth();
 
     	{ // render
 
     		if( frame_count < 120 ) {
     			int w = (CANVAS_SIZE - TOYGL_LOGO_WIDTH(5)) / 2;
     			int h = (CANVAS_SIZE - TOYGL_LOGO_HEIGHT(5)) / 2;
-    			renderer.draw_logo( tgl::vec2i(w, h), 5, tgl::rgb::black, tgl::rgb::red, tgl::rgb::green, tgl::rgb::blue, font8x8_basic );
+    			rend.draw_logo( tgl::vec2i(w, h), 5, tgl::rgb::black, tgl::rgb::red, tgl::rgb::green, tgl::rgb::blue, font8x8_basic );
 
     			goto next;
     		}
@@ -149,25 +149,25 @@ int main(void) {
 
     		scale += std::min(0.01 * (2 - scale), 0.1);
 
-    		renderer.set_scale( scale / 2 );
-    		renderer.set_rotation( tgl::vec3f(radx, rady, 0) );
+    		rend.set_scale( scale / 2 );
+    		rend.set_rotation( tgl::vec3f(radx, rady, 0) );
 
-    		renderer.draw_3d_cube( tgl::vec3f(0, 0, 0) );
-    		renderer.draw_3d_cube( tgl::vec3f(3, 0, 0) );
-    		renderer.draw_3d_cube( tgl::vec3f(-3, 0, 0) );
-    		renderer.draw_3d_cube( tgl::vec3f(0, 3, 0) );
-    		renderer.draw_3d_cube( tgl::vec3f(0, -3, 0) );
-    		renderer.draw_3d_cube( tgl::vec3f(0, 0, 3) );
-    		renderer.draw_3d_cube( tgl::vec3f(0, 0, -3) );
+    		rend.draw_3d_cube( tgl::vec3f(0, 0, 0) );
+    		rend.draw_3d_cube( tgl::vec3f(3, 0, 0) );
+    		rend.draw_3d_cube( tgl::vec3f(-3, 0, 0) );
+    		rend.draw_3d_cube( tgl::vec3f(0, 3, 0) );
+    		rend.draw_3d_cube( tgl::vec3f(0, -3, 0) );
+    		rend.draw_3d_cube( tgl::vec3f(0, 0, 3) );
+    		rend.draw_3d_cube( tgl::vec3f(0, 0, -3) );
 
-    		renderer.draw_3d_cube( tgl::vec3f(px, 0, pz) );
+    		rend.draw_3d_cube( tgl::vec3f(px, 0, pz) );
 
 //    		renderer.set_texture(true);
 //    		renderer.draw_texture( 0, 0 );
 //    		renderer.set_texture(false);
 
-    		renderer.set_color( tgl::rgb::black );
-    		renderer.draw_string(4, 4, text.c_str(), font8x8_basic);
+    		rend.set_color( tgl::rgb::black );
+    		rend.draw_string(4, 4, text.c_str(), font8x8_basic);
 
     	}
 
