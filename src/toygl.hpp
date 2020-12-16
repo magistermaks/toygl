@@ -112,7 +112,6 @@
  * 		Configuration calls:
  * 			set_color
  * 			set_depth
- * 			set_color_from_texture
  * 			set_texture
  * 			set_texture_src
  * 			set_texture_uv
@@ -278,7 +277,6 @@ namespace tgl {
 
 #ifdef TOYGL_ENABLE_TEXTURES
 		public:
-			void set_color_from_texture( int x, int y );
 			void set_texture( bool enable );
 			void set_texture_src( tgl::byte* buffer, uint width, uint height );
 			void set_texture_uv( trig2f uv );
@@ -572,10 +570,10 @@ void tgl::renderer::draw_circle( vec2i pos, int r ) {
 
 		for( int y = ymax; y >= ymin; y -- ) {
 
-			const int py = std::pow( y - pos.y, 2 );
+			const int py = (y - pos.y) * (y - pos.y);
 
 			// simplified distance check
-			if( std::pow( x - pos.x, 2 ) + py <= powr ) {
+			if( (x - pos.x) * (x - pos.x) + py <= powr ) {
 
 				draw_pixel( x, y );
 				painted = true;
@@ -677,7 +675,17 @@ void tgl::renderer::draw_triangle( vec2i v1, vec2i v2, vec2i v3 ) {
 				if( b2 == b3 ) {
 
 #ifdef TOYGL_ENABLE_TEXTURES
-					if( texture_flag ) set_color_from_texture( x, y );
+					if( texture_flag ){
+
+						// map pixel (x,y) to texture coordinates and quarry color
+						vec3f uv = texture_matrix * vec3f( x, y, 1 );
+
+						const uint uvx = tgl::math::max_clamp( std::floor(uv.x), texture_width );
+						const uint uvy = tgl::math::max_clamp( std::floor(uv.y), texture_height );
+
+						col = texture + (uvy * (texture_width + 1) + uvx) * channels;
+
+					}
 #endif
 
 					draw_pixel( x, y );
@@ -722,15 +730,6 @@ void tgl::renderer::draw_image( uint x, uint y, tgl::byte* buffer, uint w, uint 
 }
 
 #ifdef TOYGL_ENABLE_TEXTURES
-
-void tgl::renderer::set_color_from_texture( int x, int y ) {
-	vec3f uv = texture_matrix * vec3f( x, y, 1 );
-
-	const uint uvx = tgl::math::max_clamp( std::floor(uv.x), texture_width );
-	const uint uvy = tgl::math::max_clamp( std::floor(uv.y), texture_height );
-
-	col = texture + (uvy * (texture_width + 1) + uvx) * channels;
-}
 
 tgl::mat3x3f tgl::renderer::triangle_mapping_matrix( trig2f t1, trig2f t2 ) {
 
