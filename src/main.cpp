@@ -1,6 +1,5 @@
 
 #include <iostream>
-#include <algorithm>
 
 #define CANVAS_SIZE 400
 #define CANVAS_SCALE 2
@@ -105,7 +104,7 @@ int main(void) {
     	window_clear( 0xFFFFFF );
     	rend.clear_depth();
 
-    	{ // render
+    	{ // draw
 
     		if( frame_count < 120 ) {
     			int w = (CANVAS_SIZE - TOYGL_LOGO_WIDTH(5)) / 2;

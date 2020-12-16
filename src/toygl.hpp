@@ -167,6 +167,9 @@
 #include <cmath>
 #include <cfloat>
 
+// used only for std::min & std::max
+#include <algorithm>
+
 // define depth test enable/disable macros
 #ifdef TOYGL_ENABLE_DEPTH
 #	define __TOYGL_DEPTH_BEGIN this->depth_flag = this->depth_enable
