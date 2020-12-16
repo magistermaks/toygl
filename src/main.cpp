@@ -1,9 +1,14 @@
 
-#define WINX_X11
-#define WINX_IMPLEMENT
-#include "lib/winx.hpp"
+#include <iostream>
+#include <algorithm>
 
-typedef unsigned long long long_time_t;
+#define CANVAS_SIZE 400
+#define CANVAS_SCALE 2
+#define CANVAS_TARGET (CANVAS_SCALE * CANVAS_SIZE)
+
+#include "lib/window.hpp"
+#include "lib/framerate.hpp"
+#include "lib/font.h"
 
 #define TOYGL_IMPLEMENT
 #define TOYGL_ENABLE_DEPTH
@@ -19,73 +24,8 @@ using tgl::color;
 using tgl::trig2f;
 using tgl::byte;
 
-#include "lib/font.h"
-#include <sys/time.h>
-#include <unistd.h>
-#include <iostream>
-
-#define CANVAS_SIZE 400
-#define CANVAS_SCALE 2
-#define CANVAS_TARGET (CANVAS_SCALE * CANVAS_SIZE)
-
-WinxWindow win( 10, 10, CANVAS_TARGET, CANVAS_TARGET );
-GC gc = DefaultGC(win.getState().display, win.getState().con);
-Pixmap pixmap = XCreatePixmap(win.getState().display, win.getState().window, CANVAS_TARGET, CANVAS_TARGET, 24 );
-
-long_time_t get_time() {
-	struct timeval tp;
-	gettimeofday(&tp, NULL);
-	return tp.tv_sec * 1000ull * 1000ull + tp.tv_usec;
-}
-
-void X11_pixmap_draw( uint x, uint y, tgl::color c ) {
-	auto& state = win.getState();
-	XSetForeground( state.display, gc, tgl::math::rgb(c[0], c[1], c[2]) );
-	XFillRectangle( state.display, pixmap, gc, x * CANVAS_SCALE, y * CANVAS_SCALE, CANVAS_SCALE, CANVAS_SCALE );
-}
-
-void X11_pixmap_update() {
-	XCopyArea( win.getState().display, pixmap, win.getState().window, gc, 0, 0, CANVAS_TARGET, CANVAS_TARGET, 0, 0 );
-}
-
-void X11_pixmap_clear( byte r, byte g, byte b ) {
-	XSetForeground( win.getState().display, gc, tgl::math::rgb(r, g, b) );
-	XFillRectangle( win.getState().display, pixmap, gc, 0, 0, CANVAS_TARGET, CANVAS_TARGET );
-}
-
-bool framerate( int target, long_time_t& fps, long_time_t& frame, long_time_t& wait ) {
-
-	const long_time_t now = get_time();
-	const long_time_t max = 1000000 / target;
-
-	static int count = 0;
-	static long_time_t start = now;
-	static long_time_t begin = now;
-
-	fps = ++count;
-	frame = (now - begin);
-	wait = max - frame;
-
-	if( now >= begin && max >= frame ) {
-
-		usleep( wait );
-
-	}else{
-
-		wait = 0;
-
-	}
-
-	begin = get_time();
-
-	if( now - start >= 1000000ull ) {
-	    start = now;
-	    count = 0;
-	    return true;
-	}
-
-	return false;
-
+void window_event_key( unsigned int keycode, bool pressed ) {
+	std::cout << "Key Event!" << std::endl;
 }
 
 void draw_3d_cube( tgl::renderer* ctx, tgl::vec3f v ) {
@@ -123,6 +63,8 @@ void draw_3d_cube( tgl::renderer* ctx, tgl::vec3f v ) {
 
 int main(void) {
 
+	window_open( "Hello ToyGL!", CANVAS_TARGET, CANVAS_TARGET );
+
 	std::cout << "Version: " << TOYGL_VERSION << std::endl;
 
 #define R 255, 0, 0
@@ -143,13 +85,9 @@ int main(void) {
 
 	size_t frame_count = 0;
 
-	tgl::renderer rend( CANVAS_SIZE, CANVAS_SIZE, X11_pixmap_draw );
+	tgl::renderer rend( CANVAS_SIZE, CANVAS_SIZE, window_draw );
 	rend.set_distance( 15 );
 	rend.set_texture_src( texture, 8, 8 );
-
-	win.setTitle( "Hello ToyGL/WINX!" );
-
-//	tgl::byte bg_circle_color[] = { 200, 200, 200 };
 
 	float radx = 0;
 	float rady = 0;
@@ -161,9 +99,10 @@ int main(void) {
 
 	std::string text = "Idle: 0ns\n\rFPS: 0";
 
-    while( win.tick() ) {
+    while( true ) {
 
-    	X11_pixmap_clear( 255, 255, 255 );
+    	window_scan();
+    	window_clear( 0xFFFFFF );
     	rend.clear_depth();
 
     	{ // render
@@ -175,9 +114,6 @@ int main(void) {
 
     			goto next;
     		}
-
-//    		renderer.set_color( bg_circle_color );
-//    		renderer.draw_circle( tgl::vec2i( CANVAS_SIZE/2, CANVAS_SIZE/2 ), CANVAS_SIZE/10 );
 
     		float px = radius * cos(radc);
 			float pz = radius * sin(radc);
@@ -201,10 +137,6 @@ int main(void) {
 
     		draw_3d_cube( &rend, tgl::vec3f(px, 0, pz) );
 
-//    		renderer.set_texture(true);
-//    		renderer.draw_texture( 0, 0 );
-//    		renderer.set_texture(false);
-
     		rend.set_color( tgl::rgb::black );
     		rend.draw_string(4, 4, text.c_str(), font8x8_basic);
 
@@ -217,10 +149,12 @@ int main(void) {
     		text = "Idle: " + std::to_string(wait) + "ns\n\rFPS: " + std::to_string(fps);
     	}
 
-    	X11_pixmap_update();
+    	window_update();
     	frame_count ++;
 
     };
+
+    window_close();
 
     return 0;
 
