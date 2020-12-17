@@ -187,7 +187,7 @@
 #	define TOYGL_LOGO_WIDTH( scale ) (scale * 41.333)
 #endif
 
-#define TOYGL_VERSION "ToyGL 1.0.0"
+#define TOYGL_VERSION "ToyGL 1.0.1"
 
 namespace tgl {
 
@@ -425,7 +425,7 @@ void tgl::renderer::clear_depth() {
 #ifdef TOYGL_ENABLE_TEXTURES
 
 void tgl::renderer::set_texture( bool enable ) {
-	texture_flag = ( texture == nullptr ) ? false : enable;
+	texture_flag = enable;
 }
 
 void tgl::renderer::set_texture_src( tgl::byte* buffer, uint w, uint h ) {
