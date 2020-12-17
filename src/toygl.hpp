@@ -223,7 +223,6 @@ namespace tgl {
 
 	};
 
-
 	struct vec2i {
 
 		int x;

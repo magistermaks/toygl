@@ -1,4 +1,10 @@
 
+/*
+ * This is not a part of TGL, its a simple framerate
+ * utility used by the provided examples.
+ * But it isn't necessary, by any means, for its operation.
+ */
+
 #include <sys/time.h>
 #include <unistd.h>
 

@@ -5,9 +5,9 @@
 #define CANVAS_SCALE 2
 #define CANVAS_TARGET (CANVAS_SCALE * CANVAS_SIZE)
 
-#include "lib/window.hpp"
-#include "lib/framerate.hpp"
-#include "lib/font.h"
+#include "../common/window.hpp"
+#include "../common/framerate.hpp"
+#include "../common/font.h"
 
 #define TOYGL_IMPLEMENT
 #define TOYGL_ENABLE_DEPTH
@@ -15,7 +15,7 @@
 #define TOYGL_ENABLE_LOGO
 #define TOYGL_ENABLE_TEXTURES
 #define TOYGL_ENABLE_RGB
-#include "toygl.hpp"
+#include "../toygl.hpp"
 
 using tgl::vec3f;
 using tgl::vec2f;
@@ -62,14 +62,14 @@ void draw_3d_cube( tgl::renderer* ctx, tgl::vec3f v ) {
 
 int main(void) {
 
-	window_open( "Hello ToyGL!", CANVAS_TARGET, CANVAS_TARGET );
+	window_open( "Cubes", CANVAS_TARGET, CANVAS_TARGET );
 
 	std::cout << "Version: " << TOYGL_VERSION << std::endl;
 
 #define R 255, 0, 0
 #define G 0, 255, 0
 #define B 0, 0, 255
-#define F 200, 30, 143
+#define F 100, 230, 143
 
 	tgl::byte texture[ 8 * 8 * 3 ] = {
 			F, F, F, F, F, F, F, F,

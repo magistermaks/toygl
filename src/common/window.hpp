@@ -1,13 +1,13 @@
 
-#pragma once
-
-#define WINDOW_X11
-
 /*
  * This is not a part of TGL, its a simple X11/WinAPI
  * window API used as a canvas for TGL to draw on.
- * But it's not necessary by any means for its operation.
+ * But it isn't necessary, by any means, for its operation.
  */
+
+#pragma once
+
+#define WINDOW_X11
 
 #ifndef CANVAS_SCALE
 #	define CANVAS_SCALE 1

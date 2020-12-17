@@ -1,4 +1,10 @@
 
+/*
+ * This is not a part of TGL, its a simple bitmap
+ * font used by the provided examples.
+ * But it isn't necessary, by any means, for its operation.
+ */
+
 #ifndef FONT_H_
 #define FONT_H_
 
