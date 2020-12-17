@@ -114,19 +114,21 @@ void window_clear( unsigned int rgb ) {
 
 void window_scan() {
 	XEvent event;
-	XNextEvent(display, &event);
+	if( XCheckMaskEvent(display, -1, &event) ) {
 
-	if (event.type == ButtonPress) {
-		mouse_down_flag = true;
-	}else if (event.type == ButtonRelease) {
-		mouse_down_flag = false;
-	}else if (event.type == MotionNotify) {
-		mouse_pos_x = event.xbutton.x;
-		mouse_pos_y = event.xbutton.y;
-	}else if (event.type == KeyPress) {
-		window_event_key( event.xkey.keycode, true );
-	}else if (event.type == KeyRelease) {
-		window_event_key( event.xkey.keycode, false );
+		if (event.type == ButtonPress) {
+			mouse_down_flag = true;
+		}else if (event.type == ButtonRelease) {
+			mouse_down_flag = false;
+		}else if (event.type == MotionNotify) {
+			mouse_pos_x = event.xbutton.x;
+			mouse_pos_y = event.xbutton.y;
+		}else if (event.type == KeyPress) {
+			window_event_key( event.xkey.keycode, true );
+		}else if (event.type == KeyRelease) {
+			window_event_key( event.xkey.keycode, false );
+		}
+
 	}
 }
 

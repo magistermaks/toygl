@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 typedef unsigned long long long_time_t;
+typedef void( *void_func )(void);
 
 long_time_t get_time() {
 	struct timeval tp;
@@ -16,7 +17,11 @@ long_time_t get_time() {
 	return tp.tv_sec * 1000ull * 1000ull + tp.tv_usec;
 }
 
-bool framerate( int target, long_time_t& fps, long_time_t& frame, long_time_t& wait ) {
+void empty_func() {
+
+}
+
+bool framerate( int target, long_time_t& fps, long_time_t& frame, long_time_t& wait, void_func func = empty_func ) {
 
 	const long_time_t now = get_time();
 	const long_time_t max = 1000000 / target;
@@ -31,10 +36,14 @@ bool framerate( int target, long_time_t& fps, long_time_t& frame, long_time_t& w
 
 	if( now >= begin && max >= frame ) {
 
-		usleep( wait );
+		for( long_time_t t = 0; t < wait; t += 100 ) {
+			func();
+			usleep( 100 );
+		}
 
 	}else{
 
+		func();
 		wait = 0;
 
 	}
