@@ -24,7 +24,7 @@ using tgl::trig2f;
 using tgl::byte;
 
 void window_event_key( unsigned int keycode, bool pressed ) {
-	std::cout << "Key Event!" << std::endl;
+
 }
 
 void draw_3d_cube( tgl::renderer* ctx, tgl::vec3f v ) {
@@ -45,7 +45,7 @@ void draw_3d_cube( tgl::renderer* ctx, tgl::vec3f v ) {
 	ctx->draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y - 1, v.z + 1) );
 	ctx->draw_3d_triangle( vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z - 1) );
 
-	//set_color( tgl::rgb::green );
+	// apply texture
 	ctx->set_texture( true );
 	ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(0, 8), vec2f(8, 0) ) );
 	ctx->draw_3d_triangle( vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z + 1) );
@@ -71,6 +71,7 @@ int main(void) {
 #define B 0, 0, 255
 #define F 100, 230, 143
 
+	// create 8x8 RGB texture
 	tgl::byte texture[ 8 * 8 * 3 ] = {
 			F, F, F, F, F, F, F, F,
 			F, B, B, R, R, B, B, F,
@@ -84,6 +85,7 @@ int main(void) {
 
 	size_t frame_count = 0;
 
+	// create new TGL renderer
 	tgl::renderer rend( CANVAS_SIZE, CANVAS_SIZE, window_draw );
 	rend.set_distance( 15 );
 	rend.set_texture_src( texture, 8, 8 );
@@ -106,6 +108,7 @@ int main(void) {
 
     	{ // draw
 
+    		// draw TGL logo for first 2 seconds
     		if( frame_count < 120 ) {
     			int w = (CANVAS_SIZE - TOYGL_LOGO_WIDTH(5)) / 2;
     			int h = (CANVAS_SIZE - TOYGL_LOGO_HEIGHT(5)) / 2;
@@ -123,6 +126,7 @@ int main(void) {
 
     		scale += std::min(0.01 * (2 - scale), 0.1);
 
+    		// set rotation and scale
     		rend.set_scale( scale / 2 );
     		rend.set_rotation( tgl::vec3f(radx, rady, 0) );
 
