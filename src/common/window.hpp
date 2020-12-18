@@ -94,6 +94,7 @@ void window_open( const char* name, int w, int h ) {
 
 void window_close() {
 	XFreeGC( display, gc );
+	XFreePixmap( display, pixmap );
 	XDestroyWindow( display, window );
 	XCloseDisplay( display );
 }
@@ -103,7 +104,7 @@ void window_update() {
 }
 
 void window_draw( unsigned int x, unsigned int y, unsigned char* c ) {
-	XSetForeground( display, gc, c[0] + (c[1] << 8) + (c[2] << 16) );
+	XSetForeground( display, gc, c[2] + (c[1] << 8) + (c[0] << 16) );
 	XFillRectangle( display, pixmap, gc, x * CANVAS_SCALE, y * CANVAS_SCALE, CANVAS_SCALE, CANVAS_SCALE );
 }
 

@@ -59,6 +59,7 @@
  * 		define TOYGL_ENABLE_RGB to add basic RGB constants and functions
  * 		define TOYGL_ENABLE_PUBLIC_MODE to make all tgl::renderer fields public
  * 		define TOYGL_ENABLE_CONTEXT to add 'tgl::renderer*' as a argument for pixel placer
+ * 		define TOYGL_ENABLE_DOUBLE to use double precision
  *
  * 3. Renderer:
  *
@@ -172,19 +173,25 @@
 
 // define depth test enable/disable macros
 #ifdef TOYGL_ENABLE_DEPTH
-#	define __TOYGL_DEPTH_BEGIN this->depth_flag = this->depth_enable
-#	define __TOYGL_DEPTH_END this->depth_flag = false
-#	define __TOYGL_DEPTH_SET( val ) this->depth = (val)
-#	define TOYGL_DEPTH( val, ... ) __TOYGL_DEPTH_BEGIN; __TOYGL_DEPTH_SET(val); __VA_ARGS__ __TOYGL_DEPTH_END;
+#	define __TOYGL_DEPTH_BEGIN( ctx ) ctx->depth_flag = ctx->depth_enable
+#	define __TOYGL_DEPTH_END( ctx ) ctx->depth_flag = false
+#	define __TOYGL_DEPTH_SET( ctx, val ) ctx->depth = (val)
+#	define TOYGL_DEPTH( ctx, val, ... ) __TOYGL_DEPTH_BEGIN(ctx); __TOYGL_DEPTH_SET(ctx, val); __VA_ARGS__ __TOYGL_DEPTH_END(ctx);
 #else
-#	define __TOYGL_DEPTH_BEGIN
-#	define __TOYGL_DEPTH_END
-#	define TOYGL_DEPTH( val, ... ) __VA_ARGS__
+#	define __TOYGL_DEPTH_BEGIN( ctx )
+#	define __TOYGL_DEPTH_END( ctx )
+#	define TOYGL_DEPTH( ctx, val, ... ) __VA_ARGS__
 #endif
 
 #ifdef TOYGL_ENABLE_LOGO
 #	define TOYGL_LOGO_HEIGHT( scale ) (scale * 24)
 #	define TOYGL_LOGO_WIDTH( scale ) (scale * 41.333)
+#endif
+
+#ifdef TOYGL_ENABLE_DOUBLE
+typedef double float_tgl;
+#else
+typedef float float_tgl;
 #endif
 
 #define TOYGL_VERSION "ToyGL 1.0.1"
@@ -205,21 +212,21 @@ namespace tgl {
 
 	struct vec3f {
 
-		float x;
-		float y;
-		float z;
+		float_tgl x;
+		float_tgl y;
+		float_tgl z;
 
-		vec3f( float x, float y, float z );
+		vec3f( float_tgl x, float_tgl y, float_tgl z );
 
 	};
 
 	struct vec2f {
 
-		float x;
-		float y;
+		float_tgl x;
+		float_tgl y;
 
 		vec2f();
-		vec2f( float x, float y );
+		vec2f( float_tgl x, float_tgl y );
 
 	};
 
@@ -235,9 +242,9 @@ namespace tgl {
 
 	struct mat3x3f {
 
-		float m00, m01, m02;
-		float m10, m11, m12;
-		float m20, m21, m22;
+		float_tgl m00, m01, m02;
+		float_tgl m10, m11, m12;
+		float_tgl m20, m21, m22;
 
 		vec3f operator*( const vec3f& v );
 		mat3x3f operator*( const mat3x3f& v );
@@ -339,9 +346,17 @@ namespace tgl {
 
 #ifdef TOYGL_ENABLE_DEPTH
 			float* depth_buffer;
+
+		public:
 			float depth;
 			bool depth_flag: 1;
 			bool depth_enable: 1;
+#endif
+
+#ifdef TOYGL_ENABLE_PUBLIC_MODE
+		public:
+#else
+		private:
 #endif
 
 #ifdef TOYGL_ENABLE_TEXTURES
@@ -505,17 +520,13 @@ void tgl::renderer::draw_logo( vec2i pos, uint size, color fg, color a, color b,
 
 void tgl::renderer::draw_line( vec2i v1, vec2i v2 ) {
 
-	v1.x = tgl::math::max_clamp( v1.x, wen );
-	v1.y = tgl::math::max_clamp( v1.y, hen );
-	v2.x = tgl::math::max_clamp( v2.x, wen );
-	v2.y = tgl::math::max_clamp( v2.y, hen );
-
 	int lx = v2.x - v1.x;
 	int ly = v2.y - v1.y;
 
 	float inter = 0;
 	const int xf = tgl::math::signum(lx);
 	const int yf = tgl::math::signum(ly);
+	int cx, cy;
 
 	lx *= xf;
 	ly *= yf;
@@ -523,13 +534,13 @@ void tgl::renderer::draw_line( vec2i v1, vec2i v2 ) {
 	if (lx > ly) {
 		const float step = (float) ly / lx;
 		while (inter < lx) {
-			draw_pixel( inter * xf + v1.x, inter * step * yf + v1.y );
+			draw_unsafe_pixel( inter * xf + v1.x, inter * step * yf + v1.y );
 			inter ++;
 		}
 	}else{
 		const float step = (float) lx / ly;
 		while (inter < ly) {
-			draw_pixel( inter * step * xf + v1.x, inter * yf + v1.y );
+			draw_unsafe_pixel( inter * step * xf + v1.x, inter * yf + v1.y );
 			inter ++;
 		}
 	}
@@ -794,7 +805,7 @@ void tgl::renderer::draw_3d_line( vec3f v1, vec3f v2 ) {
 	project_vector( v1 );
 	project_vector( v2 );
 
-	TOYGL_DEPTH( (v1.z + v2.z) * 0.5f, {
+	TOYGL_DEPTH( this, (v1.z + v2.z) * 0.5f, {
 
 		vec2i p1( std::round(v1.x), std::round(v1.y) );
 		vec2i p2( std::round(v2.x), std::round(v2.y) );
@@ -811,7 +822,7 @@ void tgl::renderer::draw_3d_triangle( vec3f v1, vec3f v2, vec3f v3 ) {
 	project_vector( v2 );
 	project_vector( v3 );
 
-	TOYGL_DEPTH( (v1.z + v2.z + v3.z) * 0.33f, {
+	TOYGL_DEPTH( this, (v1.z + v2.z + v3.z) * 0.33f, {
 
 		if (v1.z <= near || v2.z <= near || v3.z <= near || v1.z > far || v2.z > far || v3.z > far) return;
 
@@ -894,7 +905,7 @@ tgl::renderer::~renderer() {
 #endif
 }
 
-tgl::vec3f::vec3f( float x, float y, float z ) {
+tgl::vec3f::vec3f( float_tgl x, float_tgl y, float_tgl z ) {
 	this->x = x;
 	this->y = y;
 	this->z = z;
@@ -905,7 +916,7 @@ tgl::vec2f::vec2f() {
 	this->y = 0;
 }
 
-tgl::vec2f::vec2f( float x, float y ) {
+tgl::vec2f::vec2f( float_tgl x, float_tgl y ) {
 	this->x = x;
 	this->y = y;
 }
@@ -955,11 +966,11 @@ tgl::trig2f::trig2f( vec2f v1, vec2f v2, vec2f v3 ) {
 
 bool tgl::math::invert_matrix( const mat3x3f& m, mat3x3f& im ) {
 
-	const float A1122 =   ( m.m11 * m.m22 - m.m12 * m.m21 );
-	const float A1022 = - ( m.m10 * m.m22 - m.m12 * m.m20 );
-	const float A2021 =   ( m.m10 * m.m21 - m.m11 * m.m20 );
+	const float_tgl A1122 =   ( m.m11 * m.m22 - m.m12 * m.m21 );
+	const float_tgl A1022 = - ( m.m10 * m.m22 - m.m12 * m.m20 );
+	const float_tgl A2021 =   ( m.m10 * m.m21 - m.m11 * m.m20 );
 
-	float det = m.m00 * A1122 + m.m01 * A1022 + m.m02 * A2021;
+	float_tgl det = m.m00 * A1122 + m.m01 * A1022 + m.m02 * A2021;
 	if( det == 0 ) return false;
 
 	det = 1.0f / det;
