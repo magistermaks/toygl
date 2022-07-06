@@ -1,12 +1,11 @@
 
 #include <iostream>
 
-#define CANVAS_SIZE 400
-#define CANVAS_SCALE 2
+#define CANVAS_SIZE 800
+#define CANVAS_SCALE 1
 #define CANVAS_TARGET (CANVAS_SCALE * CANVAS_SIZE)
 
 #include "../common/window.hpp"
-#include "../common/framerate.hpp"
 #include "../common/font.h"
 
 #define TOYGL_IMPLEMENT
@@ -53,7 +52,7 @@ void draw_3d_cube( tgl::renderer* ctx, tgl::vec3f v ) {
 
 int main(void) {
 
-	window_open( "Blocks", CANVAS_TARGET, CANVAS_TARGET );
+	window_open( "Blocks", CANVAS_TARGET, CANVAS_TARGET, true );
 
 	std::cout << "Version: " << TOYGL_VERSION << std::endl;
 
@@ -92,9 +91,9 @@ int main(void) {
 	float radc = 0;
 	float radius = 8.0f;
 
-	std::string text = "Idle: 0ns\n\rFPS: 0";
+	std::string text = "FPS: 0";
 
-    while( true ) {
+    while( !should_close ) {
 
     	window_scan();
     	window_clear( 0xFFFFFF );
@@ -141,10 +140,10 @@ int main(void) {
 
     	next:
 
-    	long_time_t fps, frame, wait;
-    	if( framerate( 60, fps, frame, wait ) ) {
-    		text = "Idle: " + std::to_string(wait) + "ns\n\rFPS: " + std::to_string(fps);
-    	}
+		long_time_t fps;
+		if( framerate(fps) ) {
+			text = "FPS: " + std::to_string(fps);
+		}
 
     	window_update();
     	frame_count ++;

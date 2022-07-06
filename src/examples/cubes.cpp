@@ -6,7 +6,6 @@
 #define CANVAS_TARGET (CANVAS_SCALE * CANVAS_SIZE)
 
 #include "../common/window.hpp"
-#include "../common/framerate.hpp"
 #include "../common/font.h"
 
 #define TOYGL_IMPLEMENT
@@ -62,7 +61,7 @@ void draw_3d_cube( tgl::renderer* ctx, tgl::vec3f v ) {
 
 int main(void) {
 
-	window_open( "Cubes", CANVAS_TARGET, CANVAS_TARGET );
+	window_open( "Cubes", CANVAS_TARGET, CANVAS_TARGET, true );
 
 	std::cout << "Version: " << TOYGL_VERSION << std::endl;
 
@@ -98,67 +97,67 @@ int main(void) {
 	float radc = 0;
 	float radius = 8.0f;
 
-	std::string text = "Idle: 0ns\n\rFPS: 0";
+	std::string text = "FPS: 0";
 
-    while( true ) {
+	while( !should_close ) {
 
-    	window_scan();
-    	window_clear( 0xFFFFFF );
-    	rend.clear_depth();
+		window_scan();
+		window_clear( 0xFFFFFF );
+		rend.clear_depth();
 
-    	{ // draw
+		{ // draw
 
-    		// draw TGL logo for first 2 seconds
-    		if( frame_count < 120 ) {
-    			int w = (CANVAS_SIZE - TOYGL_LOGO_WIDTH(5)) / 2;
-    			int h = (CANVAS_SIZE - TOYGL_LOGO_HEIGHT(5)) / 2;
-    			rend.draw_logo( tgl::vec2i(w, h), 5, tgl::rgb::black, tgl::rgb::red, tgl::rgb::green, tgl::rgb::blue, font8x8_basic );
+			// draw TGL logo for first 2 seconds
+			if( frame_count < 120 ) {
+				int w = (CANVAS_SIZE - TOYGL_LOGO_WIDTH(5)) / 2;
+				int h = (CANVAS_SIZE - TOYGL_LOGO_HEIGHT(5)) / 2;
+				rend.draw_logo( tgl::vec2i(w, h), 5, tgl::rgb::black, tgl::rgb::red, tgl::rgb::green, tgl::rgb::blue, font8x8_basic );
 
-    			goto next;
-    		}
+				goto next;
+			}
 
-    		float px = radius * cos(radc);
+			float px = radius * cos(radc);
 			float pz = radius * sin(radc);
 
-    		radx += 0.005;
-    		rady += 0.005;
-    		radc -= 0.01;
+			radx += 0.005;
+			rady += 0.005;
+			radc -= 0.01;
 
-    		scale += std::min(0.01 * (2 - scale), 0.1);
+			scale += std::min(0.01 * (2 - scale), 0.1);
 
-    		// set rotation and scale
-    		rend.set_scale( scale / 2 );
-    		rend.set_rotation( tgl::vec3f(radx, rady, 0) );
+			// set rotation and scale
+			rend.set_scale( scale / 2 );
+			rend.set_rotation( tgl::vec3f(radx, rady, 0) );
 
-    		draw_3d_cube( &rend,  tgl::vec3f(0, 0, 0) );
-    		draw_3d_cube( &rend, tgl::vec3f(3, 0, 0) );
-    		draw_3d_cube( &rend, tgl::vec3f(-3, 0, 0) );
-    		draw_3d_cube( &rend, tgl::vec3f(0, 3, 0) );
-    		draw_3d_cube( &rend, tgl::vec3f(0, -3, 0) );
-    		draw_3d_cube( &rend, tgl::vec3f(0, 0, 3) );
-    		draw_3d_cube( &rend, tgl::vec3f(0, 0, -3) );
+			draw_3d_cube( &rend,  tgl::vec3f(0, 0, 0) );
+			draw_3d_cube( &rend, tgl::vec3f(3, 0, 0) );
+			draw_3d_cube( &rend, tgl::vec3f(-3, 0, 0) );
+			draw_3d_cube( &rend, tgl::vec3f(0, 3, 0) );
+			draw_3d_cube( &rend, tgl::vec3f(0, -3, 0) );
+			draw_3d_cube( &rend, tgl::vec3f(0, 0, 3) );
+			draw_3d_cube( &rend, tgl::vec3f(0, 0, -3) );
 
-    		draw_3d_cube( &rend, tgl::vec3f(px, 0, pz) );
+			draw_3d_cube( &rend, tgl::vec3f(px, 0, pz) );
 
-    		rend.set_color( tgl::rgb::black );
-    		rend.draw_string(4, 4, text.c_str(), font8x8_basic);
+			rend.set_color( tgl::rgb::black );
+			rend.draw_string(4, 4, text.c_str(), font8x8_basic);
 
-    	}
+		}
 
-    	next:
+		next:
 
-    	long_time_t fps, frame, wait;
-    	if( framerate( 60, fps, frame, wait ) ) {
-    		text = "Idle: " + std::to_string(wait) + "ns\n\rFPS: " + std::to_string(fps);
-    	}
+		long_time_t fps;
+		if( framerate(fps) ) {
+			text = "FPS: " + std::to_string(fps);
+		}
 
-    	window_update();
-    	frame_count ++;
+		window_update();
+		frame_count ++;
 
-    };
+	};
 
-    window_close();
+	window_close();
 
-    return 0;
+	return 0;
 
 }

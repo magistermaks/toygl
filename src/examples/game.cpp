@@ -6,7 +6,6 @@
 #define CANVAS_TARGET (CANVAS_SCALE * CANVAS_SIZE)
 
 #include "../common/window.hpp"
-#include "../common/framerate.hpp"
 #include "../common/font.h"
 
 #define TOYGL_IMPLEMENT
@@ -174,10 +173,10 @@ void move_player( float c ) {
 }
 
 void window_event_key( unsigned int keycode, bool pressed ) {
-	if( keycode == 25 ) bw = pressed;
-	if( keycode == 38 ) bs = pressed;
-	if( keycode == 39 ) ba = pressed;
-	if( keycode == 40 ) bd = pressed;
+	if( keycode == 'w' ) bw = pressed;
+	if( keycode == 'a' ) bs = pressed;
+	if( keycode == 's' ) ba = pressed;
+	if( keycode == 'd' ) bd = pressed;
 }
 
 void draw_intrest_point( tgl::renderer* ctx, vec3f v ) {
@@ -271,7 +270,7 @@ void draw_map( tgl::renderer* ctx, tgl::byte map[8][8] ) {
 
 int main(void) {
 
-	window_open( "Perfect Game 2020 (TGL 3D)", CANVAS_TARGET, CANVAS_TARGET );
+	window_open( "Perfect Game 2020 (TGL 3D)", CANVAS_TARGET, CANVAS_TARGET, true );
 	std::cout << "Version: " << TOYGL_VERSION << std::endl;
 
 	// create new TGL renderer
@@ -279,64 +278,64 @@ int main(void) {
 	rend.set_distance( 0 );
 	rend.set_clip( 0.0001, 100 );
 
-	std::string text = "Idle: 0ns\n\rFPS: 0";
+	std::string text = "FPS: 0";
 
-    while( true ) {
+	while( !should_close ) {
 
-    	window_scan();
-    	window_clear( 0xFFFFFF ); // 0x3F3F3F
-    	rend.clear_depth();
+		window_scan();
+		window_clear( 0xFFFFFF ); // 0x3F3F3F
+		rend.clear_depth();
 
-    	if( bw ) move_player( +0.2 ); //pos.z += 0.1;
-    	if( bs ) rot.y += 0.05;
-    	if( ba ) move_player( -0.2 );//pos.z -= 0.1;
-    	if( bd ) rot.y -= 0.05;
+		if( bw ) move_player( +0.2 ); //pos.z += 0.1;
+		if( bs ) rot.y += 0.05;
+		if( ba ) move_player( -0.2 );//pos.z -= 0.1;
+		if( bd ) rot.y -= 0.05;
 
-    	{ // draw
+		{ // draw
 
-    		// draw TGL logo for first 2 seconds
-    		if( frame_count < 120 ) {
-    			int w = (CANVAS_SIZE - TOYGL_LOGO_WIDTH(5)) / 2;
-    			int h = (CANVAS_SIZE - TOYGL_LOGO_HEIGHT(5)) / 2;
-    			rend.draw_logo( tgl::vec2i(w, h), 5, tgl::rgb::black, tgl::rgb::red, tgl::rgb::green, tgl::rgb::blue, font8x8_basic );
+			// draw TGL logo for first 2 seconds
+			if( frame_count < 120 ) {
+				int w = (CANVAS_SIZE - TOYGL_LOGO_WIDTH(5)) / 2;
+				int h = (CANVAS_SIZE - TOYGL_LOGO_HEIGHT(5)) / 2;
+				rend.draw_logo( tgl::vec2i(w, h), 5, tgl::rgb::black, tgl::rgb::red, tgl::rgb::green, tgl::rgb::blue, font8x8_basic );
 
-    			goto next;
-    		}
+				goto next;
+			}
 
-    		if( frame_count > effect_begin && frame_count < effect_end ) {
-    			uint x = (CANVAS_SIZE - 16 * effect_text.size()) / 2;
+			if( frame_count > effect_begin && frame_count < effect_end ) {
+				uint x = (CANVAS_SIZE - 16 * effect_text.size()) / 2;
 				uint y = (CANVAS_SIZE - 16) / 2;
-    			rend.draw_string( x, y, effect_text.c_str(), font8x8_basic, 2 );
+				rend.draw_string( x, y, effect_text.c_str(), font8x8_basic, 2 );
 
-    			goto next;
-    		}
+				goto next;
+			}
 
-    		rend.set_rotation( rot );
-    		rend.set_camera( pos );
+			rend.set_rotation( rot );
+			rend.set_camera( pos );
 
-    		// draw map
-    		draw_map( &rend, map[map_id] );
+			// draw map
+			draw_map( &rend, map[map_id] );
 
-    		rend.set_color( tgl::rgb::black );
-    		rend.draw_string(4, 4, text.c_str(), font8x8_basic);
+			rend.set_color( tgl::rgb::black );
+			rend.draw_string(4, 4, text.c_str(), font8x8_basic);
 
-    	}
+		}
 
-    	next:
+		next:
 
 		window_update();
 
-    	long_time_t fps, frame, wait;
-    	if( framerate( 60, fps, frame, wait, window_scan ) ) {
-    		text = "Idle: " + std::to_string(wait) + "ns\n\rFPS: " + std::to_string(fps);
-    	}
+		long_time_t fps;
+		if( framerate(fps) ) {
+			text = "FPS: " + std::to_string(fps);
+		}
 
-    	frame_count ++;
+		frame_count ++;
 
-    };
+	};
 
-    window_close();
+	window_close();
 
-    return 0;
+	return 0;
 
 }
