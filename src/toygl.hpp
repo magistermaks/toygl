@@ -194,6 +194,10 @@ typedef double float_tgl;
 typedef float float_tgl;
 #endif
 
+#if defined(_WIN32) || defined(_WIN64)
+typedef unsigned int uint;
+#endif
+
 #define TOYGL_VERSION "ToyGL 1.0.1"
 
 namespace tgl {
@@ -329,6 +333,12 @@ namespace tgl {
 #else
 		private:
 #endif
+
+			#if defined(_WIN32) || defined(_WIN64)
+			#	undef far
+			#	undef near
+			#endif
+
 			float rxc, rxs;
 			float ryc, rys;
 			float rzc, rzs;
@@ -1040,3 +1050,4 @@ tgl::byte tgl::math::blue( uint color ) {
 #endif
 
 #endif
+

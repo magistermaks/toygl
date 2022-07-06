@@ -187,7 +187,7 @@ long_time_t get_time() {
 #if defined(_WIN32) || defined(_WIN64)
 	SYSTEMTIME tp;
 	GetSystemTime(&tp);
-	return tp.wSecond * 1000ull * 1000ull + tp.wMilliseconds
+	return tp.wSecond * 1000ull * 1000ull + tp.wMilliseconds;
 #else
 	struct timeval tp;
 	gettimeofday(&tp, NULL);
