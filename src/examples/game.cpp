@@ -7,6 +7,7 @@
 
 #include "../common/window.hpp"
 #include "../common/font.h"
+#include "../common/textures.h"
 
 #define TOYGL_IMPLEMENT
 #define TOYGL_ENABLE_DEPTH
@@ -24,39 +25,12 @@ using tgl::trig2f;
 using tgl::byte;
 using tgl::vec2i;
 
-#define TEX_SIZE 8
 #define MAP_SIZE_X 8
 #define MAP_SIZE_Y 8
 
-#define A 51, 51, 51
-#define B 95, 95, 95
-#define C 125, 125, 125
-#define D 63, 63, 63
 #define R 160, 0, 0
 #define T 254, 67, 67
 #define Y 255, 0, 0
-
-tgl::byte texture_wall[ 8 * 8 * 3 ] = {
-		A, A, A, A, A, A, A, C,
-		A, B, B, B, B, B, B, C,
-		A, B, C, B, B, C, B, C,
-		A, B, B, B, B, B, B, C,
-		A, B, B, B, B, B, B, C,
-		A, B, C, B, B, C, B, C,
-		A, B, B, B, B, B, B, C,
-		A, C, C, C, C, C, C, C
-};
-
-tgl::byte texture_floor[ 8 * 8 * 3 ] = {
-		D, A, A, A, D, A, A, A,
-		D, C, D, C, D, C, D, C,
-		A, A, D, A, A, A, D, A,
-		D, C, D, C, D, C, D, C,
-		D, A, A, A, D, A, A, A,
-		D, C, D, C, D, C, D, C,
-		A, A, D, A, A, A, D, A,
-		D, C, D, C, D, C, D, C
-};
 
 tgl::byte texture_cube[ 4 * 4 * 3 ] = {
 		R, R, R, T,
@@ -217,46 +191,46 @@ void draw_map( tgl::renderer* ctx, tgl::byte map[8][8] ) {
 					draw_intrest_point( ctx, v );
 				}
 
-				ctx->set_texture_src( texture_wall, TEX_SIZE, TEX_SIZE );
+				ctx->set_texture_src( texture_bricks, 128, 128 );
 
 				if( map[y + 1][x] == 0 ) {
 					vec3f v( x * 2, 0, y * 2 + 2 );
-					ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(0, TEX_SIZE), vec2f(TEX_SIZE, 0) ) );
+					ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(128, 0), vec2f(0, 128) ) );
 					ctx->draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1) );
-					ctx->set_texture_uv( trig2f( vec2f(TEX_SIZE, TEX_SIZE), vec2f(TEX_SIZE, 0), vec2f(0, TEX_SIZE) ) );
+					ctx->set_texture_uv( trig2f( vec2f(128, 128), vec2f(0, 128), vec2f(128, 0) ) );
 					ctx->draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z - 1) );
 				}
 
 				if( map[y][x + 1] == 0 ) {
 					vec3f v( x * 2 + 2, 0, y * 2);
-					ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(0, TEX_SIZE), vec2f(TEX_SIZE, 0) ) );
+					ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(0, 128), vec2f(128, 0) ) );
 					ctx->draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y - 1, v.z + 1) );
-					ctx->set_texture_uv( trig2f( vec2f(TEX_SIZE, TEX_SIZE), vec2f(TEX_SIZE, 0), vec2f(0, TEX_SIZE) ) );
+					ctx->set_texture_uv( trig2f( vec2f(128, 128), vec2f(128, 0), vec2f(0, 128) ) );
 					ctx->draw_3d_triangle( vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z - 1) );
 				}
 
 				if( map[y - 1][x] == 0 ) {
 					vec3f v( x * 2, 0, y * 2 - 2);
-					ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(0, TEX_SIZE), vec2f(TEX_SIZE, 0) ) );
+					ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(0, 128), vec2f(128, 0) ) );
 					ctx->draw_3d_triangle( vec3f(v.x - 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z + 1) );
-					ctx->set_texture_uv( trig2f( vec2f(TEX_SIZE, TEX_SIZE), vec2f(TEX_SIZE, 0), vec2f(0, TEX_SIZE) ) );
+					ctx->set_texture_uv( trig2f( vec2f(128, 128), vec2f(128, 0), vec2f(0, 128) ) );
 					ctx->draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y - 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1) );
 				}
 
 				if( map[y][x - 1] == 0 ) {
 					vec3f v( x * 2 - 2, 0, y * 2);
-					ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(0, TEX_SIZE), vec2f(TEX_SIZE, 0) ) );
+					ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(128, 0), vec2f(0, 128) ) );
 					ctx->draw_3d_triangle( vec3f(v.x + 1, v.y - 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1) );
-					ctx->set_texture_uv( trig2f( vec2f(TEX_SIZE, TEX_SIZE), vec2f(TEX_SIZE, 0), vec2f(0, TEX_SIZE) ) );
+					ctx->set_texture_uv( trig2f( vec2f(128, 128), vec2f(0, 128), vec2f(128, 0) ) );
 					ctx->draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y - 1, v.z + 1) );
 				}
 
-				ctx->set_texture_src( texture_floor, TEX_SIZE, TEX_SIZE );
+				ctx->set_texture_src( texture_tiles, 128, 128 );
 
 				vec3f v( x * 2, -2, y * 2);
-				ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(0, TEX_SIZE), vec2f(TEX_SIZE, 0) ) );
+				ctx->set_texture_uv( trig2f( vec2f(0, 0), vec2f(0, 128), vec2f(128, 0) ) );
 				ctx->draw_3d_triangle( vec3f(v.x - 1, v.y + 1, v.z - 1), vec3f(v.x + 1, v.y + 1, v.z - 1), vec3f(v.x - 1, v.y + 1, v.z + 1) );
-				ctx->set_texture_uv( trig2f( vec2f(TEX_SIZE, TEX_SIZE), vec2f(TEX_SIZE, 0), vec2f(0, TEX_SIZE) ) );
+				ctx->set_texture_uv( trig2f( vec2f(128, 128), vec2f(128, 0), vec2f(0, 128) ) );
 				ctx->draw_3d_triangle( vec3f(v.x + 1, v.y + 1, v.z + 1), vec3f(v.x - 1, v.y + 1, v.z + 1), vec3f(v.x + 1, v.y + 1, v.z - 1) );
 
 			}
